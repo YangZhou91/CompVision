@@ -7,6 +7,7 @@
 //============================================================================
 
 #include <iostream>
+#include <stdio.h>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -151,16 +152,41 @@ void drawLBPFeatures(){
 
 	cout << "[drawLBPFeature] The size of input " << input.rows << " x " << input.cols << endl;
 	for(int x = 0; x < input.cols- N; x += N){
-
 		for(int y = 0; y < input.rows - N; y += N){
 			Mat tile = input(Rect(x, y, N, N));
 			tiles.push_back(tile);
 		}
 	}
 
-	imshow("tile", tiles.at(25));
+
+
+	Mat lbp_output;
+	Mat lbp_histogram;
+	// Obtain the LBP image
+	lbp::OLBP(tiles.at(20), lbp_output);
+	// Obtain the LBP histogram
+	lbp::histogram(tiles.at(20), lbp_histogram, 20);
+
+	imshow("tile", tiles.at(20));
+	imshow("lbp_output", lbp_output);
+//	imshow("lbp_histogram", lbp_histogram);
+
+	// Create an image to display the histograms
+	int histSize = 256;
+	int hist_w = 512;
+	int hist_h = 400;
+	int bin_w = cvRound( (double) hist_w/histSize );
+	Mat histImage(hist_w, hist_w, CV_8UC3, Scalar(0,0,0));
+
+	for(int i = 0; i < histSize; i ++){
+
+		line(histImage, Point( bin_w*(i-1), hist_h - cvRound(lbp_histogram.at<float>(i-1)) ) ,
+                Point( bin_w*(i), hist_h - cvRound(lbp_histogram.at<float>(i)) ),
+                Scalar( 255, 0, 0), 2, 8, 0  );
+	}
 
 	cout << "[drawLBPFeatures] the size of tiles array: " << tiles.size() << endl;
+	imshow("histogram", histImage);
 	waitKey(0);
 
 }
