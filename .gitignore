@@ -28,3 +28,14 @@ local.properties
 # TeXlipse plugin
 .texlipse
 ##################################################
+
+## Visual Studio ##
+*.sdf
+*.sln
+*.v12.suo
+*.vcxproj.filters
+*.vcxproj.user
+*.vcxproj
+
+# Windows stuff
+Thumbs.db
