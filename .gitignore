@@ -36,6 +36,7 @@ local.properties
 *.vcxproj.filters
 *.vcxproj.user
 *.vcxproj
+Release/
 
 # Windows stuff
 Thumbs.db
