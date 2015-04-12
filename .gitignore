@@ -29,6 +29,7 @@ local.properties
 .texlipse
 ##################################################
 
+
 ## Visual Studio ##
 *.sdf
 *.sln
@@ -37,6 +38,8 @@ local.properties
 *.vcxproj.user
 *.vcxproj
 Release/
+/Debug
 
 # Windows stuff
 Thumbs.db
+
