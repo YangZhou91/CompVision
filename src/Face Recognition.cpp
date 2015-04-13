@@ -9,7 +9,6 @@
 // Get rid of errors for using sprintf
 //#define _CRT_SECURE_NO_WARNINGS
 
-
 #include <iostream>
 #include <stdio.h>
 #include "dirent.h"
@@ -19,8 +18,6 @@
 #include <opencv2/nonfree/nonfree.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
-
 
 using namespace std;
 using namespace cv;
@@ -33,18 +30,15 @@ struct MGHData
 	int angle;
 };
 
-
-Mat drawSiftFeatures(vector<MGHData> data);
-void drawLBPFeatures(vector<MGHData> data);
+Mat extractAllSiftFeatures(vector<MGHData> data);
+Mat extractAllLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int	*computeLbpHist(Mat &image, int *lbpHist);
 Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
-void computeCodeWords(Mat descriptors, int K);
-
+Mat computeCodeWords(Mat descriptors, int K);
 
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
-
 
 int main() {
 
@@ -52,14 +46,14 @@ int main() {
 	vector<MGHData> trainingdata, testingdata,groupdata;
 	MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
 
-	drawSiftFeatures(trainingdata);
-	drawLBPFeatures(trainingdata);
+	extractAllSiftFeatures(trainingdata);
+	extractAllLBPFeatures(trainingdata);
 
 	cout << "The end of the program" << endl;
 	return 0;
 }
 
-
+// Load training and testing images
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory)
 {
 	cout << "Loading Images" << endl;
@@ -185,8 +179,7 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 	return true;
 }
 
-
-
+// Extract SIFT Features for all images
 Mat extractAllSiftFeatures(vector<MGHData> data) {
 
 	// To store keypoints
@@ -227,7 +220,8 @@ Mat extractAllSiftFeatures(vector<MGHData> data) {
 	return featureUnclustered;
 }
 
-void extractAllLBPFeatures(vector<MGHData> data){
+// Extract LBP Features for all images
+Mat extractAllLBPFeatures(vector<MGHData> data){
 	char* filename = new char[100];
 		// to store the current input image
 	Mat input;
@@ -268,13 +262,13 @@ void extractAllLBPFeatures(vector<MGHData> data){
 	  namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE );
 	  imshow("calcHist Demo", histImage );
 
+	  return featureUncluster;
 
 	  waitKey(0);
 
 }
 
-
-//Compute an single lbp value from a pixel
+// Compute an single lbp value from a pixel
 int computeLbpCode(unsigned char seq[9]){
 
 
@@ -300,7 +294,7 @@ int computeLbpCode(unsigned char seq[9]){
 	return result;
 }
 
-//
+// Compute histogram for given image
 int* computeLbpHist(Mat &image, int* lbpHist){
 
 
@@ -332,8 +326,7 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 	return lbpHist;
 }
 
-
-// Extract LBP Features for each image
+// Extract LBP Features for given image
 Mat extractLBPFeatures(Mat image, Mat &outputFeature){
 
 	Mat input;
@@ -367,7 +360,8 @@ Mat extractLBPFeatures(Mat image, Mat &outputFeature){
 	return histMat;
 }
 
-void computeCodeWords(Mat descriptors, int K){
+// Compute code words for given descriptors
+Mat computeCodeWords(Mat descriptors, int K){
 	// Change to K later on
 	int clusterCount = 10;
 	Mat labels;
@@ -377,8 +371,11 @@ void computeCodeWords(Mat descriptors, int K){
 	kmeans(descriptors, clusterCount, labels, criteria, 1, KMEANS_RANDOM_CENTERS, centers);
 
 	cout << "[computerCodeWords] The size of centers: " << centers.rows << " x " << centers.cols << endl;
+
+	return centers;
 }
 
+// Return closest subject match
 string computeRecognition(Mat input_hist, vector<Mat> training_hist)
 {
 	string closest_subject = "";
