@@ -16,8 +16,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 // import for LBP library
-#include "lbp.hpp"
-#include "histogram.hpp"
+
+// import another LBP library
+
 
 using namespace std;
 using namespace cv;
@@ -25,6 +26,9 @@ using namespace cv;
 void drawBoundingBox();
 void drawSiftFeatures();
 void drawLBPFeatures();
+int computeLbpCode(unsigned char seq[9]);
+int	*computeLbpHist(Mat &image, int *lbpHist);
+int *extractLBPFeatures(int *outputFeatures);
 
 
 int main() {
@@ -33,6 +37,7 @@ int main() {
 //	drawSiftFeatures();
 //	drawBoundingBox();
 	drawLBPFeatures();
+
 	cout << "The end of the program" << endl; // prints !!!Hello World!!!
 	return 0;
 }
@@ -139,18 +144,114 @@ void drawSiftFeatures() {
 }
 
 void drawLBPFeatures(){
+	char* filename = new char[100];
+		// to store the current input image
+	Mat input;
+	sprintf(filename, "/Users/Gavin/Desktop/CompVision/Training Images/1.jpg");
+	input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+
+	Mat patch = input(Rect(300,200,60,60));
+	cout << "patch =" << endl;
+	cout << patch << endl;
+
+	int hist[256];
+	computeLbpHist(patch, hist);
+//	cout << "[drawLBPFeatures] hist = " << hist[2] << endl;
+	int histSize = 256;
+	int *feature = new int[256];
+	extractLBPFeatures(feature);
+
+	int hist_w = 512; int hist_h = 400;
+	int bin_w = cvRound( (double)hist_w/histSize);
+	Mat histImage(hist_h, hist_w, CV_8UC3, Scalar(0,0,0));
+
+	for (int i = 1; i < histSize; i++){
+		line(histImage, Point(bin_w*(i-1), hist_h - cvRound(hist[i-1])),
+				Point( bin_w*(i), hist_h - cvRound(hist[i-1]) ),
+				Scalar( 255, 0, 0), 2, 8, 0  );
+		cout << "[drawLBPFeature] hist " << i -1  << " "<< feature[i-1] << endl;
+	}
+
+	  /// Display
+	  namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE );
+	  imshow("calcHist Demo", histImage );
+
+
+	  waitKey(0);
+
+}
+
+
+//Compute an single lbp value from a pixel
+int computeLbpCode(unsigned char seq[9]){
+
+
+	bool bin[8] = {false};
+	int base = seq[0];
+	int result = 0, one = 1, final;
+	// Compare each element with the center element, and update the binary value
+	for(int i = 0; i < 8; i++){
+		if(base >= seq[i+1]){
+			bin[i] = 0;
+
+		}
+		else{
+			bin[i] = 1;
+		}
+	}
+
+	// Concatenate the binary number
+	for(int i = 0; i < 8; i++){
+//		decimal = decimal << 1 | array[i];
+		result = result << 1 | bin[i];
+	}
+	return result;
+}
+
+//
+int* computeLbpHist(Mat &image, int* lbpHist){
+
+
+	unsigned char locP[9];
+	// The 58 different uniform pattern
+	// The 256 different pattern without uniform pattern
+	for(int i = 0; i < 256; i++){
+		lbpHist[i] = 0;
+	}
+	// for the each row and column, and avoid corners
+	for(int i = 2; i < image.rows -2; i++){
+
+		for(int j = 2; j < image.cols -2; j++){
+
+			locP[0] = image.at<unsigned char>(i,j);
+			locP[1] = image.at<unsigned char>(i-1,j);
+			locP[2] = image.at<unsigned char>(i-1,j-1);
+			locP[3] = image.at<unsigned char>(i, j-1);
+			locP[4] = image.at<unsigned char>(i+1, j-1);
+			locP[5] = image.at<unsigned char>(i+1, j);
+			locP[6] = image.at<unsigned char>(i+1, j+1);
+			locP[7] = image.at<unsigned char>(i, j+1);
+			locP[8] = image.at<unsigned char>(i-1, j+1);
+			lbpHist[computeLbpCode(locP)] ++;
+		}
+	}
+
+
+	return lbpHist;
+}
+
+int* extractLBPFeatures(int *outputFeature){
 
 	Mat input;
-	// The size of small window
-	int N = 100;
+	int width = 10;
+	int height = 10;
+	int N = 10;
+
 	vector<Mat> tiles;
 	char *filename = new char[100];
 	sprintf(filename, "/Users/Gavin/Desktop/CompVision/Training Images/1.jpg");
 	input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
-//	imshow("input", input);
-//	waitKey(0);
-
-	cout << "[drawLBPFeature] The size of input " << input.rows << " x " << input.cols << endl;
+	cout<< "[extractLBPFeatures] size of image: " << input.rows << " x " << input.cols << endl;
 	for(int x = 0; x < input.cols- N; x += N){
 		for(int y = 0; y < input.rows - N; y += N){
 			Mat tile = input(Rect(x, y, N, N));
@@ -158,35 +259,16 @@ void drawLBPFeatures(){
 		}
 	}
 
-
-
-	Mat lbp_output;
-	Mat lbp_histogram;
-	// Obtain the LBP image
-	lbp::OLBP(tiles.at(20), lbp_output);
-	// Obtain the LBP histogram
-	lbp::histogram(tiles.at(20), lbp_histogram, 20);
-
-	imshow("tile", tiles.at(20));
-	imshow("lbp_output", lbp_output);
-//	imshow("lbp_histogram", lbp_histogram);
-
-	// Create an image to display the histograms
-	int histSize = 256;
-	int hist_w = 512;
-	int hist_h = 400;
-	int bin_w = cvRound( (double) hist_w/histSize );
-	Mat histImage(hist_w, hist_w, CV_8UC3, Scalar(0,0,0));
-
-	for(int i = 0; i < histSize; i ++){
-
-		line(histImage, Point( bin_w*(i-1), hist_h - cvRound(lbp_histogram.at<float>(i-1)) ) ,
-                Point( bin_w*(i), hist_h - cvRound(lbp_histogram.at<float>(i)) ),
-                Scalar( 255, 0, 0), 2, 8, 0  );
+	cout << "[extractLBPFeatures] size of tiles: " << tiles.size() << endl;
+	int count = 0;
+	// not uniform pattern
+	int hist[259];
+	// For each tile, compute the histogram
+	for(int i = 0; i < tiles.size(); i++){
+		computeLbpHist(tiles.at(i), hist);
+		for(int j = 0; j < 256; j++){
+			outputFeature[j] = hist[j];
+		}
 	}
-
-	cout << "[drawLBPFeatures] the size of tiles array: " << tiles.size() << endl;
-	imshow("histogram", histImage);
-	waitKey(0);
-
 }
+
