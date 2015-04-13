@@ -39,7 +39,7 @@ void drawLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int	*computeLbpHist(Mat &image, int *lbpHist);
-Mat extractLBPFeatures(Mat &outputFeatures);
+Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
 void computeCodeWords(Mat descriptors, int K);
 
 
@@ -242,7 +242,16 @@ void drawLBPFeatures(vector<MGHData> data){
 //	cout << "[drawLBPFeatures] hist = " << hist[2] << endl;
 	int histSize = 256;
 	Mat features;
-	extractLBPFeatures(features);
+	Mat featureUncluster;
+	for (int i = 0; i < data.size(); i ++){
+		MGHData tempData = data.at(i);
+		Mat tempImg = tempData.image;
+
+		extractLBPFeatures(tempImg, features);
+
+		features.copyTo(featureUncluster.row(i));
+	}
+	
 
 	int hist_w = 512; int hist_h = 400;
 	int bin_w = cvRound( (double)hist_w/histSize);
@@ -323,7 +332,9 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 	return lbpHist;
 }
 
-Mat extractLBPFeatures(Mat &outputFeature){
+
+// Extract LBP Features for each image
+Mat extractLBPFeatures(Mat image, Mat &outputFeature){
 
 	Mat input;
 	int width = 10;
@@ -331,10 +342,9 @@ Mat extractLBPFeatures(Mat &outputFeature){
 	int N = 10;
 
 	vector<Mat> tiles;
-	char *filename = new char[100];
-	sprintf(filename, "/Users/Gavin/Desktop/CompVision/Training Images/1.jpg");
-	input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
-	cout<< "[extractLBPFeatures] size of image: " << input.rows << " x " << input.cols << endl;
+	
+	image.copyTo(input);
+
 	for(int x = 0; x < input.cols- N; x += N){
 		for(int y = 0; y < input.rows - N; y += N){
 			Mat tile = input(Rect(x, y, N, N));
