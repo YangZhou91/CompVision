@@ -36,8 +36,8 @@ Mat bulkExtractSiftFeatures(vector<MGHData> data);
 Mat bulkExtractLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
-int	*computeLbpHist(Mat &image, int *lbpHist);
-void computeSiftHist(Mat &image, const Mat &codeWords, int* siftHist);
+int* computeLbpHist(Mat &image, int *lbpHist);
+int* computeSiftHist(Mat &image, const Mat &codeWords);
 Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
 Mat computeCodeWords(Mat descriptors, int K);
 
@@ -47,7 +47,6 @@ int main() {
 
 	vector<MGHData> trainingdata, testingdata, groupdata;
 
-	cout << "Loading training and testing image data..." << endl;
 	MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
 
 	Mat sift_features, lbp_features;
@@ -60,7 +59,7 @@ int main() {
 	cout << "Computing code words for training imgs..." << endl;
 	feature_clusters = computeCodeWords(sift_features, 5);
 
-
+	
 
 	//computeRecognition(Mat input_hist, vector<Mat> training_hist);
 
@@ -206,7 +205,6 @@ Mat bulkExtractSiftFeatures(vector<MGHData> data) {
 	cv::SiftDescriptorExtractor detector;
 	// Construct image name
 
-
 	for (int i = 0; i < data.size(); i++) {
 		MGHData tempData = data.at(i);
 		Mat tempImg = tempData.image;
@@ -227,7 +225,7 @@ Mat bulkExtractSiftFeatures(vector<MGHData> data) {
 		//drawKeypoints(tempImg, keypoints, output);
 		//resize(output, output_resize, Size(192, 240));
 		//imshow(format("SIFT_Feature_%i", i), output_resize);
-		cout << "[drawSiftFeatures] i : " << i << endl;
+		cout << "[SiftFeatures] i=" << i << endl;
 	}
 
 	computeCodeWords(featureUnclustered, 10);
@@ -261,7 +259,6 @@ Mat bulkExtractLBPFeatures(vector<MGHData> data){
 		features.copyTo(featureUncluster.row(i));
 	}
 	
-
 	int hist_w = 512; int hist_h = 400;
 	int bin_w = cvRound( (double)hist_w/histSize);
 	Mat histImage(hist_h, hist_w, CV_8UC3, Scalar(0,0,0));
@@ -285,8 +282,6 @@ Mat bulkExtractLBPFeatures(vector<MGHData> data){
 
 // Compute an single lbp value from a pixel
 int computeLbpCode(unsigned char seq[9]){
-
-
 	bool bin[8] = {false};
 	int base = seq[0];
 	int result = 0, one = 1, final;
@@ -294,7 +289,6 @@ int computeLbpCode(unsigned char seq[9]){
 	for(int i = 0; i < 8; i++){
 		if(base >= seq[i+1]){
 			bin[i] = 0;
-
 		}
 		else{
 			bin[i] = 1;
@@ -311,8 +305,6 @@ int computeLbpCode(unsigned char seq[9]){
 
 // Compute LBP histogram for given image
 int* computeLbpHist(Mat &image, int* lbpHist){
-
-
 	unsigned char locP[9];
 	// The 58 different uniform pattern
 	// The 256 different pattern without uniform pattern
@@ -337,16 +329,19 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 		}
 	}
 
-
 	return lbpHist;
 }
 
 // Compute SIFT histogram for given image
-void computeSiftHist(MGHData data, const Mat &codeWords, int* siftHist)
+int* computeSiftHist(MGHData data, const Mat &codeWords)
 {
+	int* hist;
 	// extract features from image
 	
+	// find nearest code word
+
 	// return histogram
+	return hist;
 }
 
 // Extract LBP Features for given image
@@ -368,7 +363,7 @@ Mat extractLBPFeatures(Mat image, Mat &outputFeature){
 		}
 	}
 
-	cout << "[extractLBPFeatures] size of tiles: " << tiles.size() << endl;
+	cout << "[extractedLBPFeatures] size of tiles: " << tiles.size() << endl;
 	int row = tiles.size();
 	// not uniform pattern
 	int hist[256];
@@ -393,7 +388,7 @@ Mat computeCodeWords(Mat descriptors, int K){
 
 	kmeans(descriptors, clusterCount, labels, criteria, 1, KMEANS_RANDOM_CENTERS, centers);
 
-	cout << "[computerCodeWords] The size of centers: " << centers.rows << " x " << centers.cols << endl;
+	cout << "[computedCodeWords] The size of centers: " << centers.rows << " x " << centers.cols << endl;
 
 	return centers;
 }
