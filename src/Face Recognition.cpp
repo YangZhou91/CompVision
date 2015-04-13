@@ -29,6 +29,7 @@ struct MGHData
 	string distance;
 	int angle;
 	Mat histogram;
+	Rect roi;
 };
 
 Mat bulkExtractSiftFeatures(vector<MGHData> data);
