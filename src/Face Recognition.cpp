@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include "dirent.h"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -23,24 +24,169 @@
 using namespace std;
 using namespace cv;
 
+struct MGHData
+{
+	Mat image;
+	string subject;
+	string distance;
+	int angle;
+};
+
 void drawBoundingBox();
 void drawSiftFeatures();
 void drawLBPFeatures();
+<<<<<<< HEAD
 int computeLbpCode(unsigned char seq[9]);
 int	*computeLbpHist(Mat &image, int *lbpHist);
 int *extractLBPFeatures(int *outputFeatures);
 
+=======
+bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
+>>>>>>> db7d861b10a4a461ac9b768c2c7447de49a98714
 
 int main() {
 
 	// to store the input file names
 //	drawSiftFeatures();
 //	drawBoundingBox();
+	
 	drawLBPFeatures();
 
 	cout << "The end of the program" << endl; // prints !!!Hello World!!!
 	return 0;
+
+	// To load data, use this
+	//vector<MGHData> trainingdata, testingdata,groupdata;
+	//MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
 }
+
+
+bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory)
+{
+	cout << "Loading Images" << endl;
+
+	string trainingDir = directory + "/Training";
+	string testingDir = directory + "/Testing";
+	string groupDir = directory + "/Group";
+
+	string delimiter = "_";
+	string delimeterExtension = ".";
+	DIR *dir;
+	struct dirent *ent;
+
+	// Training images
+	if ((dir = opendir(trainingDir.c_str())) != NULL) {
+
+		while ((ent = readdir(dir)) != NULL) {
+			
+			string imgname = ent->d_name;
+
+			if (imgname.find(".jpg") != string::npos) {
+				
+				std::cout << "Loading " << imgname << endl;
+
+				vector<string> tokens;
+				size_t pos = 0;
+				std::string token;
+
+				while ((pos = imgname.find(delimiter)) != string::npos) {
+					token = imgname.substr(0, pos);
+					tokens.push_back(token);
+					imgname.erase(0, pos + delimiter.length());
+				}
+				pos = imgname.find(delimeterExtension);
+				token = imgname.substr(0, pos);
+				tokens.push_back(token);
+
+				Mat img = imread(trainingDir + "/" + ent->d_name, CV_LOAD_IMAGE_GRAYSCALE);
+				MGHData data;
+				data.image = img;
+				data.subject = tokens[0];
+				data.distance = tokens[1];
+				data.angle = stoi(tokens[2]);
+
+				trainingdataset.push_back(data);
+			}
+
+		}
+		closedir(dir);
+	}
+	else {
+		/* could not open directory */
+		cerr << "Unable to open image directory " << trainingDir << endl;
+		return false;
+	}
+
+	// Testing images
+	if ((dir = opendir(testingDir.c_str())) != NULL) {
+
+		while ((ent = readdir(dir)) != NULL) {
+			string imgname = ent->d_name;
+
+			if (imgname.find(".jpg") != string::npos) {
+				std::cout << "Loading " << imgname << endl;
+				
+				vector<string> tokens;
+				size_t pos = 0;
+				std::string token;
+
+				while ((pos = imgname.find(delimiter)) != string::npos) {
+					token = imgname.substr(0, pos);
+					tokens.push_back(token);
+					imgname.erase(0, pos + delimiter.length());
+				}
+				pos = imgname.find(delimeterExtension);
+				token = imgname.substr(0, pos);
+				tokens.push_back(token);
+
+				Mat img = imread(testingDir + "/" + ent->d_name, CV_LOAD_IMAGE_GRAYSCALE);
+				MGHData data;
+				data.image = img;
+				data.subject = tokens[0];
+				data.distance = tokens[1];
+				data.angle = stoi(tokens[2]);
+
+				testingdataset.push_back(data);
+			}
+		}
+		closedir(dir);
+	}
+	else {
+		/* could not open directory */
+		cerr << "Unable to open image directory " << testingDir << endl;
+		return false;
+	}
+
+	//Group data
+	if ((dir = opendir(groupDir.c_str())) != NULL) {
+
+		while ((ent = readdir(dir)) != NULL) {
+			string imgname = ent->d_name;
+
+			if (imgname.find(".jpg") != string::npos) {
+				std::cout << "Loading " << imgname << endl;
+
+				Mat img = imread(groupDir + "/" + ent->d_name, CV_LOAD_IMAGE_GRAYSCALE);
+				MGHData data;
+				data.image = img;
+				data.subject = "group";
+				data.distance = "group";
+				data.angle = 0;
+
+				groupdataset.push_back(data);
+			}
+		}
+		closedir(dir);
+	}
+	else {
+		/* could not open directory */
+		cerr << "Unable to open image directory " << testingDir << endl;
+		return false;
+	}
+	return true;
+}
+
+
 
 void drawBoundingBox(){
 
