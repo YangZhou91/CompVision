@@ -187,7 +187,7 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 
 
 
-Mat drawSiftFeatures(vector<MGHData> data) {
+Mat extractAllSiftFeatures(vector<MGHData> data) {
 
 	// To store keypoints
 	vector<KeyPoint> keypoints;
@@ -227,7 +227,7 @@ Mat drawSiftFeatures(vector<MGHData> data) {
 	return featureUnclustered;
 }
 
-void drawLBPFeatures(vector<MGHData> data){
+void extractAllLBPFeatures(vector<MGHData> data){
 	char* filename = new char[100];
 		// to store the current input image
 	Mat input;
@@ -377,4 +377,13 @@ void computeCodeWords(Mat descriptors, int K){
 	kmeans(descriptors, clusterCount, labels, criteria, 1, KMEANS_RANDOM_CENTERS, centers);
 
 	cout << "[computerCodeWords] The size of centers: " << centers.rows << " x " << centers.cols << endl;
+}
+
+string computeRecognition(Mat input_hist, vector<Mat> training_hist)
+{
+	string closest_subject = "";
+
+
+
+	return closest_subject;
 }
