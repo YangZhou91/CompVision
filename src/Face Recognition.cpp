@@ -39,7 +39,7 @@ void drawLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int	*computeLbpHist(Mat &image, int *lbpHist);
-int *extractLBPFeatures(int *outputFeatures);
+Mat extractLBPFeatures(Mat &outputFeatures);
 void computeCodeWords(Mat descriptors, int K);
 
 
@@ -48,16 +48,12 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 
 int main() {
 
-	// to store the input file names
-	
-
-	//drawLBPFeatures();
-
 	// To load data, use this
 	vector<MGHData> trainingdata, testingdata,groupdata;
 	MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
 
 	drawSiftFeatures(trainingdata);
+	drawLBPFeatures(trainingdata);
 
 	cout << "The end of the program" << endl;
 	return 0;
@@ -231,7 +227,7 @@ Mat drawSiftFeatures(vector<MGHData> data) {
 	return featureUnclustered;
 }
 
-void drawLBPFeatures(){
+void drawLBPFeatures(vector<MGHData> data){
 	char* filename = new char[100];
 		// to store the current input image
 	Mat input;
@@ -245,8 +241,8 @@ void drawLBPFeatures(){
 	computeLbpHist(patch, hist);
 //	cout << "[drawLBPFeatures] hist = " << hist[2] << endl;
 	int histSize = 256;
-	int *feature = new int[256];
-	extractLBPFeatures(feature);
+	Mat features;
+	extractLBPFeatures(features);
 
 	int hist_w = 512; int hist_h = 400;
 	int bin_w = cvRound( (double)hist_w/histSize);
@@ -327,7 +323,7 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 	return lbpHist;
 }
 
-int* extractLBPFeatures(int *outputFeature){
+Mat extractLBPFeatures(Mat &outputFeature){
 
 	Mat input;
 	int width = 10;
@@ -347,19 +343,18 @@ int* extractLBPFeatures(int *outputFeature){
 	}
 
 	cout << "[extractLBPFeatures] size of tiles: " << tiles.size() << endl;
-	int count = 0;
+	int row = tiles.size();
 	// not uniform pattern
-	int hist[259];
+	int hist[256];
+	Mat histMat;
 	// For each tile, compute the histogram
 	for(int i = 0; i < tiles.size(); i++){
 		computeLbpHist(tiles.at(i), hist);
-		for(int j = 0; j < 256; j++){
-			outputFeature[j] = hist[j];
-		}
+		Mat temp = Mat(1, 256, CV_64F, hist);
+		temp.copyTo(histMat.row(i));
 	}
 
-	return outputFeature;
-
+	return histMat;
 }
 
 void computeCodeWords(Mat descriptors, int K){
