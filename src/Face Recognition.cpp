@@ -35,6 +35,7 @@ Mat extractAllLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int	*computeLbpHist(Mat &image, int *lbpHist);
+int* computeSiftHist(Mat &image, int* siftHist);
 Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
 Mat computeCodeWords(Mat descriptors, int K);
 
@@ -179,7 +180,7 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 	return true;
 }
 
-// Extract SIFT Features for all images
+// Extract SIFT Features for image list
 Mat extractAllSiftFeatures(vector<MGHData> data) {
 
 	// To store keypoints
@@ -220,7 +221,7 @@ Mat extractAllSiftFeatures(vector<MGHData> data) {
 	return featureUnclustered;
 }
 
-// Extract LBP Features for all images
+// Extract LBP Features for image list
 Mat extractAllLBPFeatures(vector<MGHData> data){
 	char* filename = new char[100];
 		// to store the current input image
@@ -326,10 +327,12 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 	return lbpHist;
 }
 
-// Compute SIFT historgram for given image
-void computeSiftHist(Mat &image, int* siftHist)
+// Compute SIFT histogram for given image
+int* computeSiftHist(Mat &image, int* siftHist)
 {
-
+	// extract features from image
+	// compute code words set of features
+	// return histogram
 }
 
 // Extract LBP Features for given image
