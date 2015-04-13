@@ -39,6 +39,9 @@ int computeLbpCode(unsigned char seq[9]);
 int* computeLbpHist(Mat &image, int *lbpHist);
 int* computeSiftHist(Mat &image, const Mat &codeWords);
 Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
+Mat extractLBPFeatures(Mat image);
+Mat extractSiftFeatures(Mat image);
+
 Mat computeCodeWords(Mat descriptors, int K);
 
 void drawRectangle();
@@ -417,4 +420,28 @@ void drawRectangle(){
 	
 	Mat input;
 
+}
+
+
+// Override method for extract LBP features
+Mat extractLBPFeatures(Mat image){
+	Mat output;
+	Mat features = extractLBPFeatures(image, output);
+
+	return features;
+}
+
+Mat extractSiftFeatures(Mat image){
+	// To store keypoints
+	vector<KeyPoint> keypoints;
+	// To store the SIFT descriptor of current image
+	cv::Mat descriptor;
+
+	cv::SiftDescriptorExtractor detector;
+
+	// detect feature points
+	detector.detect(image, keypoints);
+	detector.compute(image, keypoints, descriptor);
+
+	return descriptor;
 }
