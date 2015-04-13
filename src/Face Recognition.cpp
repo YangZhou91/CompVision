@@ -30,8 +30,8 @@ struct MGHData
 	int angle;
 };
 
-Mat extractAllSiftFeatures(vector<MGHData> data);
-Mat extractAllLBPFeatures(vector<MGHData> data);
+Mat bulkExtractSiftFeatures(vector<MGHData> data);
+Mat bulkExtractLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int	*computeLbpHist(Mat &image, int *lbpHist);
@@ -181,7 +181,7 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 }
 
 // Extract SIFT Features for image list
-Mat extractAllSiftFeatures(vector<MGHData> data) {
+Mat bulkExtractSiftFeatures(vector<MGHData> data) {
 
 	// To store keypoints
 	vector<KeyPoint> keypoints;
@@ -222,7 +222,7 @@ Mat extractAllSiftFeatures(vector<MGHData> data) {
 }
 
 // Extract LBP Features for image list
-Mat extractAllLBPFeatures(vector<MGHData> data){
+Mat bulkExtractLBPFeatures(vector<MGHData> data){
 	char* filename = new char[100];
 		// to store the current input image
 	Mat input;
