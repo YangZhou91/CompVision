@@ -6,6 +6,10 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
+// Get rid of errors for using sprintf
+#define _CRT_SECURE_NO_WARNINGS
+
+
 #include <iostream>
 #include <stdio.h>
 #include "dirent.h"
@@ -16,9 +20,6 @@
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-// import for LBP library
-
-// import another LBP library
 
 
 using namespace std;
@@ -35,14 +36,14 @@ struct MGHData
 void drawBoundingBox();
 void drawSiftFeatures();
 void drawLBPFeatures();
-<<<<<<< HEAD
+
 int computeLbpCode(unsigned char seq[9]);
 int	*computeLbpHist(Mat &image, int *lbpHist);
 int *extractLBPFeatures(int *outputFeatures);
 
-=======
+
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
->>>>>>> db7d861b10a4a461ac9b768c2c7447de49a98714
+
 
 int main() {
 
@@ -416,5 +417,8 @@ int* extractLBPFeatures(int *outputFeature){
 			outputFeature[j] = hist[j];
 		}
 	}
+
+	return outputFeature;
+
 }
 
