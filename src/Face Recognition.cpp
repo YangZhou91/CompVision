@@ -33,13 +33,15 @@ struct MGHData
 };
 
 Mat bulkExtractSiftFeatures(vector<MGHData> data);
-Mat bulkExtractLBPFeatures(vector<MGHData> data);
+vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int* computeLbpHist(Mat &image, int *lbpHist);
 int* computeSiftHist(Mat &image, const Mat &codeWords);
 Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
 Mat computeCodeWords(Mat descriptors, int K);
+
+void drawRectangle();
 
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
 
@@ -49,7 +51,8 @@ int main() {
 
 	MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
 
-	Mat sift_features, lbp_features;
+	Mat sift_features;
+	vector<Mat> lbp_features;
 	cout << "Computing Sift features for training imgs..." << endl;
 	sift_features = bulkExtractSiftFeatures(trainingdata);
 	cout << "Computing LBP features for training imgs..." << endl;
@@ -59,11 +62,12 @@ int main() {
 	cout << "Computing code words for training imgs..." << endl;
 	feature_clusters = computeCodeWords(sift_features, 5);
 
-	
+
 
 	//computeRecognition(Mat input_hist, vector<Mat> training_hist);
 
 	cout << ">>>>>>>>>>>>>End of the program" << endl;
+	waitKey(0);
 	return 0;
 }
 
@@ -234,13 +238,15 @@ Mat bulkExtractSiftFeatures(vector<MGHData> data) {
 }
 
 // Extract LBP Features for image list
-Mat bulkExtractLBPFeatures(vector<MGHData> data){
+vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data){
 	char* filename = new char[100];
 		// to store the current input image
 	Mat input;
 	sprintf(filename, "/Users/Gavin/Desktop/CompVision/Training Images/1.jpg");
 	input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
-
+	int height = input.rows;
+	int width = input.cols;
+	int N = 10;
 	Mat patch = input(Rect(300,200,60,60));
 
 
@@ -248,15 +254,18 @@ Mat bulkExtractLBPFeatures(vector<MGHData> data){
 	computeLbpHist(patch, hist);
 //	cout << "[drawLBPFeatures] hist = " << hist[2] << endl;
 	int histSize = 256;
+
+	int numOfRow = data.size()*width*height/N/N;
+	cout << "[bulkExtractLBPFeatures] num of Rows: " << numOfRow << endl;
 	Mat features;
-	Mat featureUncluster;
+	vector <Mat> featureUncluster;
 	for (int i = 0; i < data.size(); i ++){
 		MGHData tempData = data.at(i);
 		Mat tempImg = tempData.image;
 
 		extractLBPFeatures(tempImg, features);
 
-		features.copyTo(featureUncluster.row(i));
+		featureUncluster.push_back(features);
 	}
 	
 	int hist_w = 512; int hist_h = 400;
@@ -363,11 +372,12 @@ Mat extractLBPFeatures(Mat image, Mat &outputFeature){
 		}
 	}
 
-	cout << "[extractedLBPFeatures] size of tiles: " << tiles.size() << endl;
-	int row = tiles.size();
+	//cout << "[extractLBPFeatures] size of tiles: " << tiles.size() << endl;
+	int numOfRow = tiles.size();
 	// not uniform pattern
 	int hist[256];
-	Mat histMat;
+	Mat histMat(numOfRow, 256, CV_64F);
+
 	// For each tile, compute the histogram
 	for(int i = 0; i < tiles.size(); i++){
 		computeLbpHist(tiles.at(i), hist);
@@ -401,4 +411,10 @@ string computeRecognition(Mat input_hist, vector<Mat> training_hist)
 
 
 	return closest_subject;
+}
+
+void drawRectangle(){
+	
+	Mat input;
+
 }
