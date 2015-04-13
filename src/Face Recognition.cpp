@@ -294,7 +294,7 @@ int computeLbpCode(unsigned char seq[9]){
 	return result;
 }
 
-// Compute histogram for given image
+// Compute LBP histogram for given image
 int* computeLbpHist(Mat &image, int* lbpHist){
 
 
@@ -324,6 +324,12 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 
 
 	return lbpHist;
+}
+
+// Compute SIFT historgram for given image
+void computeSiftHist(Mat &image, int* siftHist)
+{
+
 }
 
 // Extract LBP Features for given image
@@ -378,7 +384,7 @@ Mat computeCodeWords(Mat descriptors, int K){
 // Return closest subject match
 string computeRecognition(Mat input_hist, vector<Mat> training_hist)
 {
-	string closest_subject = "";
+	string closest_subject = "None";
 
 
 
