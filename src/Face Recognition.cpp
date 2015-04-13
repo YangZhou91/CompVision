@@ -34,12 +34,13 @@ struct MGHData
 };
 
 
-void drawSiftFeatures(vector<MGHData> data);
+Mat drawSiftFeatures(vector<MGHData> data);
 void drawLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int	*computeLbpHist(Mat &image, int *lbpHist);
 int *extractLBPFeatures(int *outputFeatures);
+void computeCodeWords(Mat descriptors, int K);
 
 
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
@@ -190,11 +191,8 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 
 
 
-void drawSiftFeatures(vector<MGHData> data) {
-	// to store the input file names
-	char* filename = new char[100];
-	// to store the current input image
-	Mat input;
+Mat drawSiftFeatures(vector<MGHData> data) {
+
 	// To store keypoints
 	vector<KeyPoint> keypoints;
 	// To store the SIFT descriptor of current image
@@ -203,20 +201,34 @@ void drawSiftFeatures(vector<MGHData> data) {
 	cv::Mat featureUnclustered;
 	cv::SiftDescriptorExtractor detector;
 	// Construct image name
-	sprintf(filename, "/Users/Gavin/Desktop/CompVision/Training Images/1.jpg");
-	input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
-	// detect feature points
-	detector.detect(input, keypoints);
-	detector.compute(input, keypoints, descriptor);
-	featureUnclustered.push_back(descriptor);
-	
-	//	imshow("Test", input);
-	Mat output;
-	Mat output_resize;
-	drawKeypoints(input, keypoints, output);
-	resize(output, output_resize, Size(192,240));
-	imshow("SIFT_Feature", output_resize);
-	waitKey(0);
+
+
+	for (int i = 0; i < data.size(); i++) {
+		MGHData tempData = data.at(i);
+		Mat tempImg = tempData.image;
+		Mat img_resize;
+		resize(tempImg, img_resize, Size(100, 200));
+		//Mat tempImg_gary;
+		// convert to gray scale image
+		//cvtColor(tempImg, tempImg_gary, CV_RGB2GRAY);
+
+		// detect feature points
+		detector.detect(img_resize, keypoints);
+		detector.compute(img_resize, keypoints, descriptor);
+		featureUnclustered.push_back(descriptor);
+
+		// Display part
+		//Mat output;
+		//Mat output_resize;
+		//drawKeypoints(tempImg, keypoints, output);
+		//resize(output, output_resize, Size(192, 240));
+		//imshow(format("SIFT_Feature_%i", i), output_resize);
+		cout << "[drawSiftFeatures] i : " << i << endl;
+	}
+
+	computeCodeWords(featureUnclustered, 10);
+
+	return featureUnclustered;
 }
 
 void drawLBPFeatures(){
@@ -350,3 +362,14 @@ int* extractLBPFeatures(int *outputFeature){
 
 }
 
+void computeCodeWords(Mat descriptors, int K){
+	// Change to K later on
+	int clusterCount = 10;
+	Mat labels;
+	Mat centers;
+	TermCriteria criteria{ TermCriteria::COUNT, 100, 1 };
+
+	kmeans(descriptors, clusterCount, labels, criteria, 1, KMEANS_RANDOM_CENTERS, centers);
+
+	cout << "[computerCodeWords] The size of centers: " << centers.rows << " x " << centers.cols << endl;
+}
