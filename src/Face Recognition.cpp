@@ -28,6 +28,7 @@ struct MGHData
 	string subject;
 	string distance;
 	int angle;
+	Mat histogram;
 };
 
 Mat bulkExtractSiftFeatures(vector<MGHData> data);
@@ -35,7 +36,7 @@ Mat bulkExtractLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int	*computeLbpHist(Mat &image, int *lbpHist);
-int* computeSiftHist(Mat &image, int* siftHist);
+void computeSiftHist(Mat &image, const Mat &codeWords, int* siftHist);
 Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
 Mat computeCodeWords(Mat descriptors, int K);
 
@@ -43,14 +44,26 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 
 int main() {
 
-	// To load data, use this
-	vector<MGHData> trainingdata, testingdata,groupdata;
+	vector<MGHData> trainingdata, testingdata, groupdata;
+
+	cout << "Loading training and testing image data..." << endl;
 	MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
 
-	extractAllSiftFeatures(trainingdata);
-	extractAllLBPFeatures(trainingdata);
+	Mat sift_features, lbp_features;
+	cout << "Computing Sift features for training imgs..." << endl;
+	sift_features = bulkExtractSiftFeatures(trainingdata);
+	cout << "Computing LBP features for training imgs..." << endl;
+	lbp_features = bulkExtractLBPFeatures(trainingdata);
 
-	cout << "The end of the program" << endl;
+	Mat feature_clusters;
+	cout << "Computing code words for training imgs..." << endl;
+	feature_clusters = computeCodeWords(sift_features, 5);
+
+
+
+	//computeRecognition(Mat input_hist, vector<Mat> training_hist);
+
+	cout << ">>>>>>>>>>>>>End of the program" << endl;
 	return 0;
 }
 
@@ -328,10 +341,10 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 }
 
 // Compute SIFT histogram for given image
-int* computeSiftHist(Mat &image, int* siftHist)
+void computeSiftHist(MGHData data, const Mat &codeWords, int* siftHist)
 {
 	// extract features from image
-	// compute code words set of features
+	
 	// return histogram
 }
 
