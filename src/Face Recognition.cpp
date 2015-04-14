@@ -135,6 +135,8 @@ int main()
 	{
 		cout << "Number of clusters = " << number_of_clusters << endl;
 
+		// testing data
+
 		// update histogram field in each testing data 
 		for (int i = 0; i < testingdata.size(); i++)
 			computeSiftCodewordHist(testingdata[i], sift_feature_clusters[number_of_clusters], sift_features_testing[i]);
@@ -154,9 +156,9 @@ int main()
 		// evaluate recognition performance
 		cout << "Computing classification..." << endl;
 
-		double sift_recognition_performance = 0.0;
-		Mat sift_confusion_matrix = Mat::zeros(5, 5, CV_64F);
-		Mat normalized_sift_confusion_matrix;
+		double sift_testing_recognition_performance = 0.0;
+		Mat sift_testing_confusion_matrix = Mat::zeros(5, 5, CV_64F);
+		Mat normalized_sift_testing_confusion_matrix;
 		for (int i = 0; i < testingdata.size(); i++)
 		{
 			MGHData actual, expected;
@@ -168,28 +170,28 @@ int main()
 			int i_idx, j_idx;
 			i_idx = angle_to_position[actual.angle];
 			j_idx = angle_to_position[testingdata[i].angle];
-			sift_confusion_matrix.at<double>(i_idx, j_idx) += 1;
+			sift_testing_confusion_matrix.at<double>(i_idx, j_idx) += 1;
 
 			if (actual.subject.compare(expected.subject))
-				sift_recognition_performance += 1;
+				sift_testing_recognition_performance += 1;
 		}
 
 		// normalize confusion matrix
 		for (int k = 0; k < 5; k++)
 		{
 			Mat row;
-			double sum = norm(sift_confusion_matrix.row(k), NORM_L1);
-			row = sift_confusion_matrix.row(k) / sum;
-			normalized_sift_confusion_matrix.push_back(row);
+			double sum = norm(sift_testing_confusion_matrix.row(k), NORM_L1);
+			row = sift_testing_confusion_matrix.row(k) / sum;
+			normalized_sift_testing_confusion_matrix.push_back(row);
 		}
 
-		sift_recognition_performance = (sift_recognition_performance / trainingdata.size()) * 100;
-		cout << "SIFT recognition performance = " << sift_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
-		cout << "SIFT Confusion matrix = " << endl << " " << normalized_sift_confusion_matrix << endl << endl << "\n" << endl;
+		sift_testing_recognition_performance = (sift_testing_recognition_performance / trainingdata.size()) * 100;
+		cout << "SIFT recognition performance [Testing] = " << sift_testing_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
+		cout << "SIFT Confusion matrix [Testing] = " << endl << " " << normalized_sift_testing_confusion_matrix << endl << endl << "\n" << endl;
 
-		double lbp_recognition_performance = 0.0;
-		Mat lbp_confusion_matrix = Mat::zeros(5, 5, CV_64F);
-		Mat lbp_normalized_confusion_matrix;
+		double lbp_testing_recognition_performance = 0.0;
+		Mat lbp_testing_confusion_matrix = Mat::zeros(5, 5, CV_64F);
+		Mat normalized_lbp_testing_confusion_matrix;
 		for (int i = 0; i < testingdata.size(); i++)
 		{
 			MGHData actual, expected;
@@ -201,25 +203,94 @@ int main()
 			int i_idx, j_idx;
 			i_idx = angle_to_position[actual.angle];
 			j_idx = angle_to_position[testingdata[i].angle];
-			lbp_confusion_matrix.at<double>(i_idx, j_idx) += 1;
+			lbp_testing_confusion_matrix.at<double>(i_idx, j_idx) += 1;
 
 			if (actual.subject.compare(expected.subject))
-				lbp_recognition_performance += 1;
+				lbp_testing_recognition_performance += 1;
 		}
 
 		// normalize confusion matrix
 		for (int k = 0; k < 5; k++)
 		{
 			Mat row;
-			double sum = norm(lbp_confusion_matrix.row(k), NORM_L1);
-			row = lbp_confusion_matrix.row(k) / sum;
-			lbp_normalized_confusion_matrix.push_back(row);
+			double sum = norm(lbp_testing_confusion_matrix.row(k), NORM_L1);
+			row = lbp_testing_confusion_matrix.row(k) / sum;
+			normalized_lbp_testing_confusion_matrix.push_back(row);
 		}
 
-		lbp_recognition_performance = (lbp_recognition_performance / trainingdata.size()) * 100;
-		cout << "LBP recognition performance = " << lbp_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
-		cout << "LBP Confusion matrix = " << endl << " " << lbp_normalized_confusion_matrix << endl << endl << "\n" << endl;
+		lbp_testing_recognition_performance = (lbp_testing_recognition_performance / trainingdata.size()) * 100;
+		cout << "LBP recognition performance [Testing] = " << lbp_testing_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
+		cout << "LBP Confusion matrix [Testing] = " << endl << " " << normalized_lbp_testing_confusion_matrix << endl << endl << "\n" << endl;
+
+		// training data
+
+		double sift_training_recognition_performance = 0.0;
+		Mat sift_training_confusion_matrix = Mat::zeros(5, 5, CV_64F);
+		Mat normalized_sift_training_confusion_matrix;
+		for (int i = 0; i < trainingdata.size(); i++)
+		{
+			MGHData actual, expected;
+			actual = computeSiftClassification(trainingdata[i], trainingdata);
+			expected = trainingdata[i];
+
+			//cout << "Actual = " << actual.subject << ", " << "Expected = " << expected.subject << endl;
+
+			int i_idx, j_idx;
+			i_idx = angle_to_position[actual.angle];
+			j_idx = angle_to_position[trainingdata[i].angle];
+			sift_training_confusion_matrix.at<double>(i_idx, j_idx) += 1;
+
+			if (actual.subject.compare(expected.subject))
+				sift_training_recognition_performance += 1;
+		}
+
+		// normalize confusion matrix
+		for (int k = 0; k < 5; k++)
+		{
+			Mat row;
+			double sum = norm(sift_training_confusion_matrix.row(k), NORM_L1);
+			row = sift_training_confusion_matrix.row(k) / sum;
+			normalized_sift_training_confusion_matrix.push_back(row);
+		}
+
+		sift_training_recognition_performance = (sift_training_recognition_performance / trainingdata.size()) * 100;
+		cout << "SIFT recognition performance [Training] = " << sift_training_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
+		cout << "SIFT Confusion matrix [Training] = " << endl << " " << normalized_sift_training_confusion_matrix << endl << endl << "\n" << endl;
+
+		double lbp_training_recognition_performance = 0.0;
+		Mat lbp_training_confusion_matrix = Mat::zeros(5, 5, CV_64F);
+		Mat normalized_lbp_training_confusion_matrix;
+		for (int i = 0; i < trainingdata.size(); i++)
+		{
+			MGHData actual, expected;
+			actual = computeLBPClassification(trainingdata[i], trainingdata);
+			expected = trainingdata[i];
+
+			//cout << "Actual = " << actual.subject << ", " << "Expected = " << expected.subject << endl;
+
+			int i_idx, j_idx;
+			i_idx = angle_to_position[actual.angle];
+			j_idx = angle_to_position[trainingdata[i].angle];
+			lbp_training_confusion_matrix.at<double>(i_idx, j_idx) += 1;
+
+			if (actual.subject.compare(expected.subject))
+				lbp_training_recognition_performance += 1;
+		}
+
+		// normalize confusion matrix
+		for (int k = 0; k < 5; k++)
+		{
+			Mat row;
+			double sum = norm(lbp_training_confusion_matrix.row(k), NORM_L1);
+			row = lbp_training_confusion_matrix.row(k) / sum;
+			normalized_lbp_training_confusion_matrix.push_back(row);
+		}
+
+		lbp_training_recognition_performance = (lbp_training_recognition_performance / trainingdata.size()) * 100;
+		cout << "LBP recognition performance [Training] = " << lbp_training_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
+		cout << "LBP Confusion matrix [Training] = " << endl << " " << normalized_lbp_training_confusion_matrix << endl << endl << "\n" << endl;
 	}
+
 	cout << ">>>>>>>>>>>>>DONE." << endl;
 	getchar();
 	return 0;
