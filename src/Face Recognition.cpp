@@ -35,6 +35,12 @@ struct MGHData
 Mat bulkExtractSiftFeatures(vector<MGHData> data);
 vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data);
 
+// For the box selection
+bool roi_capture = false;
+bool got_roi = false;
+Point pt1, pt2;
+Mat cap_img;
+
 int computeLbpCode(unsigned char seq[9]);
 int* computeLbpHist(Mat &image, int *lbpHist);
 int* computeSiftHist(Mat &image, const Mat &codeWords);
@@ -444,4 +450,56 @@ Mat extractSiftFeatures(Mat image){
 	detector.compute(image, keypoints, descriptor);
 
 	return descriptor;
+}
+
+//Callback for mousclick event, the x-y coordinate of mouse button-up and button-down 
+//are stored in two points pt1, pt2.
+void mouse_click(int event, int x, int y, int flags, void *param)
+{
+
+	switch (event)
+	{
+	case CV_EVENT_LBUTTONDOWN:
+	{
+		std::cout << "Mouse Pressed" << std::endl;
+
+		if (!roi_capture)
+		{
+			pt1.x = x;
+			pt1.y = y;
+		}
+		else
+		{
+			std::cout << "ROI Already Acquired" << std::endl;
+		}
+		break;
+	}
+	case CV_EVENT_LBUTTONUP:
+	{
+		if (!got_roi)
+		{
+			Mat cl;
+			std::cout << "Mouse LBUTTON Released" << std::endl;
+
+			pt2.x = x;
+			pt2.y = y;
+			cl = cap_img.clone();
+			Mat roi(cl, Rect(pt1, pt2));
+			Mat prev_imgT = roi.clone();
+			std::cout << "PT1" << pt1.x << ", " << pt1.y << std::endl;
+			std::cout << "PT2" << pt2.x << "," << pt2.y << std::endl;
+
+			imshow("Clone", cl);
+
+			got_roi = true;
+		}
+		else
+		{
+			std::cout << "ROI Already Acquired" << std::endl;
+		}
+		break;
+	}
+
+	}
+
 }
