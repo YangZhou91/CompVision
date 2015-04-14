@@ -159,6 +159,7 @@ int main()
 
 	double sift_recognition_performance = 0.0;
 	Mat sift_confusion_matrix = Mat::zeros(5, 5, CV_64F);
+	Mat normalized_sift_confusion_matrix;
 	for (int i = 0; i < testingdata.size(); i++)
 	{
 		MGHData actual, expected;
@@ -175,12 +176,23 @@ int main()
 		if (actual.subject.compare(expected.subject))
 			sift_recognition_performance += 1;
 	}
+
+	// normalize confusion matrix
+	for (int k = 0; k < 5; k++)
+	{
+		Mat row;
+		double sum = norm(sift_confusion_matrix.row(k), NORM_L1);
+		row = sift_confusion_matrix.row(k) / sum;
+		normalized_sift_confusion_matrix.push_back(row);
+	}
+
 	sift_recognition_performance = ( sift_recognition_performance / trainingdata.size() ) * 100;
 	cout << "SIFT recognition performance = " << sift_recognition_performance << "%" << endl;
-	cout << "SIFT Confusion matrix = " << endl << " " << sift_confusion_matrix << endl << endl << "\n" << endl;
+	cout << "SIFT Confusion matrix = " << endl << " " << normalized_sift_confusion_matrix << endl << endl << "\n" << endl;
 
 	double lbp_recognition_performance = 0.0;
 	Mat lbp_confusion_matrix = Mat::zeros(5, 5, CV_64F);
+	Mat lbp_normalized_confusion_matrix;
 	for (int i = 0; i < testingdata.size(); i++)
 	{
 		MGHData actual, expected;
@@ -197,9 +209,19 @@ int main()
 		if (actual.subject.compare(expected.subject))
 			lbp_recognition_performance += 1;
 	}
+
+	// normalize confusion matrix
+	for (int k = 0; k < 5; k++)
+	{
+		Mat row;
+		double sum = norm(lbp_confusion_matrix.row(k), NORM_L1);
+		row = lbp_confusion_matrix.row(k) / sum;
+		lbp_normalized_confusion_matrix.push_back(row);
+	}
+
 	lbp_recognition_performance = ( lbp_recognition_performance / trainingdata.size() ) * 100;
 	cout << "LBP recognition performance = " << lbp_recognition_performance << "%" << endl;
-	cout << "LBP Confusion matrix = " << endl << " " << lbp_confusion_matrix << endl << endl << "\n" << endl;
+	cout << "LBP Confusion matrix = " << endl << " " << lbp_normalized_confusion_matrix << endl << endl << "\n" << endl;
 
 	cout << ">>>>>>>>>>>>>End of the program" << endl;
 	getchar();
