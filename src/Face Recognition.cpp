@@ -36,10 +36,9 @@ Mat bulkExtractSiftFeatures(vector<MGHData> data);
 vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data);
 
 // For the box selection
-bool roi_capture = false;
-bool got_roi = false;
-Point pt1, pt2;
-Mat cap_img;
+//bool got_roi = false;
+//Point pt1, pt2;
+//Mat cap_img;
 
 int computeLbpCode(unsigned char seq[9]);
 int* computeLbpHist(Mat &image, int *lbpHist);
@@ -52,6 +51,7 @@ Mat computeCodeWords(Mat descriptors, int K);
 void drawRectangle();
 
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
+void mouse_click(int event, int x, int y, int flags, void *param);
 
 int main() {
 
@@ -59,6 +59,7 @@ int main() {
 
 	MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
 
+	
 	vector<Mat> sift_features;
 	vector<Mat> lbp_features;
 
@@ -85,6 +86,9 @@ int main() {
 	cout << ">>>>>>>>>>>>>End of the program" << endl;
 	getchar();
 	return 0;
+	
+
+
 }
 
 // Load training and testing images
@@ -100,7 +104,7 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 	string delimeterExtension = ".";
 	DIR *dir;
 	struct dirent *ent;
-
+	
 	// Training images
 	if ((dir = opendir(trainingDir.c_str())) != NULL) {
 
@@ -126,13 +130,18 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 				tokens.push_back(token);
 
 				Mat img = imread(trainingDir + "/" + ent->d_name, CV_LOAD_IMAGE_GRAYSCALE);
+
+				Point point1(stoi(tokens[3]), stoi(tokens[4]));
+				Point point2(stoi(tokens[5]), stoi(tokens[6]));
 				MGHData data;
 				data.image = img;
 				data.subject = tokens[0];
 				data.distance = tokens[1];
 				data.angle = stoi(tokens[2]);
+				data.roi = Rect(point1, point2);
 
 				trainingdataset.push_back(data);
+
 			}
 
 		}
@@ -143,7 +152,7 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 		cerr << "Unable to open image directory " << trainingDir << endl;
 		return false;
 	}
-
+	
 	// Testing images
 	if ((dir = opendir(testingDir.c_str())) != NULL) {
 
@@ -167,11 +176,16 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 				tokens.push_back(token);
 
 				Mat img = imread(testingDir + "/" + ent->d_name, CV_LOAD_IMAGE_GRAYSCALE);
+
+				Point point1(stoi(tokens[4]), stoi(tokens[5]));
+				Point point2(stoi(tokens[6]), stoi(tokens[7]));
+
 				MGHData data;
 				data.image = img;
 				data.subject = tokens[0];
 				data.distance = tokens[1];
 				data.angle = stoi(tokens[2]);
+				data.roi = Rect(point1, point2);
 
 				testingdataset.push_back(data);
 			}
@@ -459,6 +473,7 @@ Mat extractSiftFeatures(Mat image){
 
 //Callback for mousclick event, the x-y coordinate of mouse button-up and button-down 
 //are stored in two points pt1, pt2.
+/*
 void mouse_click(int event, int x, int y, int flags, void *param)
 {
 
@@ -468,15 +483,9 @@ void mouse_click(int event, int x, int y, int flags, void *param)
 	{
 		std::cout << "Mouse Pressed" << std::endl;
 
-		if (!roi_capture)
-		{
-			pt1.x = x;
-			pt1.y = y;
-		}
-		else
-		{
-			std::cout << "ROI Already Acquired" << std::endl;
-		}
+		pt1.x = x;
+		pt1.y = y;
+
 		break;
 	}
 	case CV_EVENT_LBUTTONUP:
@@ -488,13 +497,8 @@ void mouse_click(int event, int x, int y, int flags, void *param)
 
 			pt2.x = x;
 			pt2.y = y;
-			cl = cap_img.clone();
-			Mat roi(cl, Rect(pt1, pt2));
-			Mat prev_imgT = roi.clone();
 			std::cout << "PT1" << pt1.x << ", " << pt1.y << std::endl;
 			std::cout << "PT2" << pt2.x << "," << pt2.y << std::endl;
-
-			imshow("Clone", cl);
 
 			got_roi = true;
 		}
@@ -508,3 +512,4 @@ void mouse_click(int event, int x, int y, int flags, void *param)
 	}
 
 }
+*/
