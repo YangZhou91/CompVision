@@ -25,8 +25,7 @@ Figs. \ref{testing1}, \ref{testing2} and \ref{testing3} show the different testi
 \vspace{5mm}
 \textbf{Part 2}
 \paragraph{}
-
-
+Fig. \ref{part2sift} shows 10 selected faces with their SIFT features. Note some faces are blurry as the images are low resolution to allow for acceptable computation time although some subjects are far away.
 
 \begin{figure}[p]
 \subfloat[]{\includegraphics[width = 0.2\textwidth]{Training/gavin_close_0_133_122_32_19.jpg}}
@@ -85,6 +84,47 @@ Figs. \ref{testing1}, \ref{testing2} and \ref{testing3} show the different testi
 \subfloat[]{\includegraphics[width = 0.25\textwidth]{Testing/gavin_close_0_glasses_128_16_42_119.jpg}}
 \caption{Testing images of the subject with accessories and different facial expressions.}
 \label{testing3}
+\end{figure}
+
+%% Part 2
+\begin{figure}[p]
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage0.jpg}}
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage1.jpg}}
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage2.jpg}}
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage3.jpg}}
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage4.jpg}}
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage5.jpg}}
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage6.jpg}}
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage7.jpg}}
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage8.jpg}}
+\subfloat[]{\includegraphics[width = 0.1\textwidth]{SIFT/siftimage9.jpg}}
+
+\caption{SIFT Features for 10 selected faces.}
+\label{part2sift}
+\end{figure}
+
+\begin{figure}[p]
+\subfloat[]{\includegraphics[width = 0.30\textwidth]{LBPHist/LBP_Hist_1.jpg}}
+\hspace{5mm}
+\subfloat[]{\includegraphics[width = 0.30\textwidth]{LBPHist/LBP_Hist_2.jpg}}
+\hspace{5mm}
+\subfloat[]{\includegraphics[width = 0.30\textwidth]{LBPHist/LBP_Hist_3.jpg}}
+
+\caption{Three examples of region histograms for a given training image.}
+\label{part2lbphist}
+\end{figure}
+
+\begin{figure}[p]
+\subfloat[LBP for Image 1]{\includegraphics[width = 0.20\textwidth]{CodeWordHist/LBP_Hist_1.jpg}}
+\hspace{5mm}
+\subfloat[LBP for Image 2]{\includegraphics[width = 0.20\textwidth]{CodeWordHist/LBP_Hist_2.jpg}}
+\hspace{5mm}
+\subfloat[SIFT for Image 1]{\includegraphics[width = 0.20\textwidth]{CodeWordHist/SIFT_Hist_1.jpg}}
+\hspace{5mm}
+\subfloat[SIFT for Image 2]{\includegraphics[width = 0.20\textwidth]{CodeWordHist/SIFT_Hist_2.jpg}}
+
+\caption{Histograms representing the codewords for SIFT and LBP for two select images.}
+\label{part2codewords}
 \end{figure}
 
 \end{document}
