@@ -92,7 +92,7 @@ int main() {
 	//	cout << "Histogram = " << endl << " " << trainingdata[i].histogram << endl << endl;
 	//}
 
-	//computeRecognition(Mat input_hist, vector<Mat> training_hist);
+	computeRecognitionRate(Mat input_hist, sift_feature_clusters);
 
 	cout << ">>>>>>>>>>>>>End of the program" << endl;
 	getchar();
@@ -449,7 +449,7 @@ Mat computeCodeWords(Mat descriptors, int K){
 }
 
 // Return closest subject match
-string computeRecognition(Mat input_hist, vector<Mat> training_hist)
+string computeRecognitionRate(Mat input_hist, vector<Mat> training_hist)
 {
 	string closest_subject = "None";
 
