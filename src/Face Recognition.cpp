@@ -55,8 +55,8 @@ Mat getROI(MGHData data);
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
 void mouse_click(int event, int x, int y, int flags, void *param);
 
-int main() {
-
+int main() 
+{
 	vector<MGHData> trainingdata, testingdata, groupdata;
 
 	cout << "Loading Images..." << endl;
@@ -65,6 +65,7 @@ int main() {
 	vector<Mat> sift_features;
 	vector<Mat> lbp_features;
 
+	// Part 1
 	cout << "Computing Sift features for training imgs..." << endl;
 	for (int i = 0; i < trainingdata.size(); i++){
 
@@ -95,7 +96,8 @@ int main() {
 	//	cout << "Histogram = " << endl << " " << trainingdata[i].histogram << endl << endl;
 	//}
 
-	computeRecognitionRate(Mat input_hist, sift_feature_clusters);
+	// Part 2
+	//computeRecognitionRate(Mat input_hist, sift_feature_clusters);
 
 	cout << ">>>>>>>>>>>>>End of the program" << endl;
 	getchar();
