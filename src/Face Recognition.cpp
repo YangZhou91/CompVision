@@ -42,6 +42,7 @@ vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data);
 //Point pt1, pt2;
 //Mat cap_img;
 
+// Feature Extraction method
 int computeLbpCode(unsigned char seq[9]);
 int* computeLbpHist(Mat &image, int *lbpHist);
 void computeSiftCodewordHist(MGHData &data, const Mat &codeWords, Mat features);
@@ -51,9 +52,11 @@ Mat extractLBPFeatures(Mat image);
 Mat extractSiftFeatures(Mat image);
 Mat computeCodeWords(Mat descriptors, int K);
 
-
+// Helper methods
 Mat getROI(MGHData data);
+void drawSIFTImage(int i, vector<KeyPoint> keypoints, Mat input);
 
+// Image loader part
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
 void mouse_click(int event, int x, int y, int flags, void *param);
 
@@ -111,6 +114,8 @@ int main()
 	// update histogram field in each trainingdata 
 	for (int i = 0; i < trainingdata.size(); i++)
 		computeLBPCodewordHist(trainingdata[i], lbp_feature_clusters, lbp_features[i]);
+
+	bulkExtractSiftFeatures(trainingdata);
 
 	// Part 3
 	//computeRecognitionRate(Mat input_hist, sift_feature_clusters);
@@ -280,14 +285,14 @@ Mat bulkExtractSiftFeatures(vector<MGHData> data) {
 		detector.compute(tempImg, keypoints, descriptor);
 		featureUnclustered.push_back(descriptor);
 
-		// Display part
-		//Mat output;
-		//Mat output_resize;
-		//drawKeypoints(tempImg, keypoints, output);
-		//resize(output, output_resize, Size(192, 240));
-		//imshow(format("SIFT_Feature_%i", i), output_resize);
-		cout << "[SiftFeatures] i=" << i << endl;
+		// For the first three image
+		if (i < 3){
+			drawSIFTImage(i, keypoints, tempImg);
+			
+		}
+
 	}
+	waitKey(0);
 
 	computeCodeWords(featureUnclustered, 10);
 
@@ -526,12 +531,19 @@ Mat extractSiftFeatures(Mat image){
 	return descriptor;
 }
 
+// Get Region of Interest
 Mat getROI(MGHData data){
 	MGHData tempData = data;
 	Mat tempMat = tempData.image;
 	Mat tempROI = tempMat(tempData.roi);
 
 	return tempROI;
+}
+
+void drawSIFTImage(int i, vector<KeyPoint> keypoints, Mat input){
+	Mat output;
+	drawKeypoints(input, keypoints, output);
+	imshow(format("SIFT_Features_%i", i), output);
 }
 
 //Callback for mousclick event, the x-y coordinate of mouse button-up and button-down 
