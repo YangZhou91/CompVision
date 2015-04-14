@@ -102,9 +102,10 @@ int main()
 
 	// create one big matrix to contain all LBP features from all training images
 	Mat lbp_features_mat;
-	for (int i = 0; i < lbp_features.size(); i++)
+	for (int i = 0; i < lbp_features.size(); i++){
 		lbp_features_mat.push_back(lbp_features.at(i));
-
+	}
+	cout << "[Main] lbp_features_mat: " << lbp_features_mat.rows << " x " << lbp_features_mat.cols << endl;
 	lbp_feature_clusters = computeCodeWords(lbp_features_mat, 5);
 
 	// update histogram field in each trainingdata 
@@ -466,12 +467,12 @@ Mat extractLBPFeatures(Mat image, Mat &outputFeature){
 	int numOfRow = tiles.size();
 	// not uniform pattern
 	int hist[256];
-	Mat histMat(numOfRow, 256, CV_64F);
+	Mat histMat(numOfRow, 256, CV_32F);
 
 	// For each tile, compute the histogram
 	for (int i = 0; i < tiles.size(); i++){
 		computeLbpHist(tiles.at(i), hist);
-		Mat temp = Mat(1, 256, CV_64F, hist);
+		Mat temp = Mat(1, 256, CV_32F, hist);
 		temp.copyTo(histMat.row(i));
 	}
 
