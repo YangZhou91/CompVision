@@ -66,18 +66,23 @@ int main()
 	vector<Mat> lbp_features;
 
 	// Part 1
-	cout << "Computing Sift features for training imgs..." << endl;
-	for (int i = 0; i < trainingdata.size(); i++){
-
+	cout << "Computing Sift features for training images..." << endl;
+	for (int i = 0; i < trainingdata.size(); i++)
 		sift_features.push_back(extractSiftFeatures(getROI(trainingdata.at(i))));
-	}
 
-	cout << "Computing LBP features for training imgs..." << endl;
+	// Display SIFT features on 10 selected training images
+	vector<Mat> sift_imgs;
+	for (int i = 0; i < 10; i++)
+	{
+		drawKeypoints(trainingdata[i].image, sift_features[i], sift_imgs[i], Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+		imshow("Sift" + to_string(i+1), sift_imgs[i]);
+	}
+	cout << "Computing LBP features for training images..." << endl;
 	for (int i = 0; i < trainingdata.size(); i++)
 		lbp_features.push_back(extractLBPFeatures(getROI(trainingdata.at(i))));
 
 	Mat sift_feature_clusters;
-	cout << "Computing code words for training imgs..." << endl;
+	cout << "Computing code words for training images..." << endl;
 
 	// create one big matrix to contain all features from all training images
 	Mat sift_features_mat;
@@ -89,12 +94,6 @@ int main()
 	// update histogram field in each trainingdata 
 	for (int i = 0; i < trainingdata.size(); i++)
 		computeSiftHist(trainingdata[i], sift_feature_clusters, sift_features[i]);
-
-	//for (int i = 0; i < trainingdata.size(); i++)
-	//{
-	//	cout << "Total number of features : " << sift_features[i].rows << endl;
-	//	cout << "Histogram = " << endl << " " << trainingdata[i].histogram << endl << endl;
-	//}
 
 	// Part 2
 	//computeRecognitionRate(Mat input_hist, sift_feature_clusters);
@@ -461,8 +460,6 @@ string computeRecognitionRate(Mat input_hist, vector<Mat> training_hist)
 
 	return closest_subject;
 }
-
-
 
 // Override method for extracting LBP features
 Mat extractLBPFeatures(Mat image){
