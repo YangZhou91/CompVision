@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <string>
+#include <map>
 #include "dirent.h"
 
 #include <opencv2/core/core.hpp>
@@ -50,8 +51,8 @@ Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
 Mat extractLBPFeatures(Mat image);
 Mat extractSiftFeatures(Mat image);
 Mat computeCodeWords(Mat descriptors, int K);
-string computeSiftClassification(MGHData testingdata, vector<MGHData> trainingdata);
-string computeLBPClassification(MGHData testingdata, vector<MGHData> trainingdata);
+MGHData computeSiftClassification(MGHData testingdata, vector<MGHData> trainingdata);
+MGHData computeLBPClassification(MGHData testingdata, vector<MGHData> trainingdata);
 
 
 Mat getROI(MGHData data);
@@ -149,35 +150,56 @@ int main()
 
 	// evaluate recognition performance
 	cout << "Computing classification..." << endl;
+	map<int, int> angle_to_position;
+	angle_to_position.insert(pair<int,int>(-45,0));
+	angle_to_position.insert(pair<int, int>(-30, 1));
+	angle_to_position.insert(pair<int, int>(0, 2));
+	angle_to_position.insert(pair<int, int>(30, 3));
+	angle_to_position.insert(pair<int, int>(45, 4));
+
 	double sift_recognition_performance = 0.0;
+	Mat sift_confusion_matrix = Mat::zeros(5, 5, CV_64F);
 	for (int i = 0; i < testingdata.size(); i++)
 	{
-		string actual, expected;
+		MGHData actual, expected;
 		actual = computeSiftClassification(testingdata[i], trainingdata);
-		expected = testingdata[i].subject;
+		expected = testingdata[i];
 
-		cout << "Actual = " << actual << ", " << "Expected = " << expected << endl;
+		cout << "Actual = " << actual.subject << ", " << "Expected = " << expected.subject << endl;
 
-		if (actual.compare(expected))
+		int i_idx, j_idx;
+		i_idx = angle_to_position[actual.angle];
+		j_idx = angle_to_position[testingdata[i].angle];
+		sift_confusion_matrix.at<double>(i_idx, j_idx) += 1;
+
+		if (actual.subject.compare(expected.subject))
 			sift_recognition_performance += 1;
 	}
-	sift_recognition_performance = sift_recognition_performance / trainingdata.size() * 100;
+	sift_recognition_performance = ( sift_recognition_performance / trainingdata.size() ) * 100;
 	cout << "SIFT recognition performance = " << sift_recognition_performance << "%" << endl;
+	cout << "SIFT Confusion matrix = " << endl << " " << sift_confusion_matrix << endl << endl << "\n" << endl;
 
 	double lbp_recognition_performance = 0.0;
+	Mat lbp_confusion_matrix = Mat::zeros(5, 5, CV_64F);
 	for (int i = 0; i < testingdata.size(); i++)
 	{
-		string actual, expected;
+		MGHData actual, expected;
 		actual = computeLBPClassification(testingdata[i], trainingdata);
-		expected = testingdata[i].subject;
+		expected = testingdata[i];
 
-		cout << "Actual = " << actual << ", " << "Expected = " << expected << endl;
+		cout << "Actual = " << actual.subject << ", " << "Expected = " << expected.subject << endl;
 
-		if (actual.compare(expected))
+		int i_idx, j_idx;
+		i_idx = angle_to_position[actual.angle];
+		j_idx = angle_to_position[testingdata[i].angle];
+		lbp_confusion_matrix.at<double>(i_idx, j_idx) += 1;
+
+		if (actual.subject.compare(expected.subject))
 			lbp_recognition_performance += 1;
 	}
-	lbp_recognition_performance = lbp_recognition_performance / trainingdata.size() * 100;
+	lbp_recognition_performance = ( lbp_recognition_performance / trainingdata.size() ) * 100;
 	cout << "LBP recognition performance = " << lbp_recognition_performance << "%" << endl;
+	cout << "LBP Confusion matrix = " << endl << " " << lbp_confusion_matrix << endl << endl << "\n" << endl;
 
 	cout << ">>>>>>>>>>>>>End of the program" << endl;
 	getchar();
@@ -558,9 +580,9 @@ Mat computeCodeWords(Mat descriptors, int K){
 }
 
 // do classification by finding nearest neighbor to its sift histogram of code words
-string computeSiftClassification(MGHData testingdata, vector<MGHData> trainingdata)
+MGHData computeSiftClassification(MGHData testingdata, vector<MGHData> trainingdata)
 {
-	string closest_subject = "None";
+	MGHData closest_subject;
 	double min_dist = numeric_limits<double>::infinity();
 
 	for (int i = 0; i < trainingdata.size(); i++)
@@ -571,17 +593,16 @@ string computeSiftClassification(MGHData testingdata, vector<MGHData> trainingda
 		if (dist < min_dist)
 		{
 			min_dist = dist;
-			closest_subject = trainingdata[i].subject;
+			closest_subject = trainingdata[i];
 		}
 	}
-
 	return closest_subject;
 }
 
-// do classification by finding nearest neighbor to its sift histogram of code words
-string computeLBPClassification(MGHData testingdata, vector<MGHData> trainingdata)
+// do classification by finding nearest neighbor to its LBP histogram of code words
+MGHData computeLBPClassification(MGHData testingdata, vector<MGHData> trainingdata)
 {
-	string closest_subject = "None";
+	MGHData closest_subject;
 	double min_dist = numeric_limits<double>::infinity();
 
 	for (int i = 0; i < trainingdata.size(); i++)
@@ -592,10 +613,9 @@ string computeLBPClassification(MGHData testingdata, vector<MGHData> trainingdat
 		if (dist < min_dist)
 		{
 			min_dist = dist;
-			closest_subject = trainingdata[i].subject;
+			closest_subject = trainingdata[i];
 		}
 	}
-
 	return closest_subject;
 }
 
