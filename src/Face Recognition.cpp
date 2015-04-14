@@ -41,7 +41,6 @@ int* computeSiftHist(Mat &image, const Mat &codeWords);
 Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
 Mat extractLBPFeatures(Mat image);
 Mat extractSiftFeatures(Mat image);
-
 Mat computeCodeWords(Mat descriptors, int K);
 
 void drawRectangle();
@@ -54,23 +53,31 @@ int main() {
 
 	MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
 
-	Mat sift_features;
+	vector<Mat> sift_features;
 	vector<Mat> lbp_features;
+
 	cout << "Computing Sift features for training imgs..." << endl;
-	sift_features = bulkExtractSiftFeatures(trainingdata);
+	for (int i = 0; i < trainingdata.size(); i++)
+		sift_features.push_back(extractSiftFeatures(trainingdata.at(i).image));
+
 	cout << "Computing LBP features for training imgs..." << endl;
-	lbp_features = bulkExtractLBPFeatures(trainingdata);
+	for (int i = 0; i < trainingdata.size(); i++)
+		lbp_features.push_back(extractLBPFeatures(trainingdata.at(i).image));
 
 	Mat feature_clusters;
 	cout << "Computing code words for training imgs..." << endl;
-	feature_clusters = computeCodeWords(sift_features, 5);
 
+	// create one big matrix to contain all features from all training images
+	Mat sift_features_mat;
+	for (int i = 0; i < sift_features.size(); i++)
+		sift_features_mat.push_back(sift_features.at(i));
 
+	feature_clusters = computeCodeWords(sift_features_mat, 5);
 
 	//computeRecognition(Mat input_hist, vector<Mat> training_hist);
 
 	cout << ">>>>>>>>>>>>>End of the program" << endl;
-	waitKey(0);
+	getchar();
 	return 0;
 }
 
@@ -92,11 +99,11 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 	if ((dir = opendir(trainingDir.c_str())) != NULL) {
 
 		while ((ent = readdir(dir)) != NULL) {
-			
+
 			string imgname = ent->d_name;
 
 			if (imgname.find(".jpg") != string::npos) {
-				
+
 				std::cout << "Loading " << imgname << endl;
 
 				vector<string> tokens;
@@ -139,7 +146,7 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 
 			if (imgname.find(".jpg") != string::npos) {
 				std::cout << "Loading " << imgname << endl;
-				
+
 				vector<string> tokens;
 				size_t pos = 0;
 				std::string token;
@@ -243,26 +250,25 @@ Mat bulkExtractSiftFeatures(vector<MGHData> data) {
 // Extract LBP Features for image list
 vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data){
 	char* filename = new char[100];
-		// to store the current input image
+	// to store the current input image
 	Mat input;
-	sprintf(filename, "/Users/Gavin/Desktop/CompVision/Training Images/1.jpg");
-	input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+
+	input = data.at(1).image;
 	int height = input.rows;
 	int width = input.cols;
 	int N = 10;
-	Mat patch = input(Rect(300,200,60,60));
-
+	Mat patch = input(Rect(300, 200, 60, 60));
 
 	int hist[256];
 	computeLbpHist(patch, hist);
-//	cout << "[drawLBPFeatures] hist = " << hist[2] << endl;
+	//	cout << "[drawLBPFeatures] hist = " << hist[2] << endl;
 	int histSize = 256;
 
-	int numOfRow = data.size()*width*height/N/N;
+	int numOfRow = data.size()*width*height / N / N;
 	cout << "[bulkExtractLBPFeatures] num of Rows: " << numOfRow << endl;
 	Mat features;
 	vector <Mat> featureUncluster;
-	for (int i = 0; i < data.size(); i ++){
+	for (int i = 0; i < data.size(); i++){
 		MGHData tempData = data.at(i);
 		Mat tempImg = tempData.image;
 
@@ -270,36 +276,35 @@ vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data){
 
 		featureUncluster.push_back(features);
 	}
-	
+
 	int hist_w = 512; int hist_h = 400;
-	int bin_w = cvRound( (double)hist_w/histSize);
-	Mat histImage(hist_h, hist_w, CV_8UC3, Scalar(0,0,0));
+	int bin_w = cvRound((double)hist_w / histSize);
+	Mat histImage(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
 
 	for (int i = 1; i < histSize; i++){
-		line(histImage, Point(bin_w*(i-1), hist_h - cvRound(hist[i-1])),
-				Point( bin_w*(i), hist_h - cvRound(hist[i-1]) ),
-				Scalar( 255, 0, 0), 2, 8, 0  );
+		//line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(hist[i - 1])),
+			//Point(bin_w*(i), hist_h - cvRound(hist[i - 1])),
+			//Scalar(255, 0, 0), 2, 8, 0);
 		//cout << "[drawLBPFeature] hist " << i -1  << " "<< feature[i-1] << endl;
 	}
 
-	  /// Display
-	  namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE );
-	  imshow("calcHist Demo", histImage );
+	/// Display
+	//namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE);
+	//imshow("calcHist Demo", histImage);
 
-	  return featureUncluster;
+	return featureUncluster;
 
-	  waitKey(0);
-
+	waitKey(0);
 }
 
 // Compute an single lbp value from a pixel
 int computeLbpCode(unsigned char seq[9]){
-	bool bin[8] = {false};
+	bool bin[8] = { false };
 	int base = seq[0];
 	int result = 0, one = 1, final;
 	// Compare each element with the center element, and update the binary value
-	for(int i = 0; i < 8; i++){
-		if(base >= seq[i+1]){
+	for (int i = 0; i < 8; i++){
+		if (base >= seq[i + 1]){
 			bin[i] = 0;
 		}
 		else{
@@ -308,8 +313,8 @@ int computeLbpCode(unsigned char seq[9]){
 	}
 
 	// Concatenate the binary number
-	for(int i = 0; i < 8; i++){
-//		decimal = decimal << 1 | array[i];
+	for (int i = 0; i < 8; i++){
+		//		decimal = decimal << 1 | array[i];
 		result = result << 1 | bin[i];
 	}
 	return result;
@@ -320,23 +325,23 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 	unsigned char locP[9];
 	// The 58 different uniform pattern
 	// The 256 different pattern without uniform pattern
-	for(int i = 0; i < 256; i++){
+	for (int i = 0; i < 256; i++){
 		lbpHist[i] = 0;
 	}
 	// for the each row and column, and avoid corners
-	for(int i = 2; i < image.rows -2; i++){
+	for (int i = 2; i < image.rows - 2; i++){
 
-		for(int j = 2; j < image.cols -2; j++){
+		for (int j = 2; j < image.cols - 2; j++){
 
-			locP[0] = image.at<unsigned char>(i,j);
-			locP[1] = image.at<unsigned char>(i-1,j);
-			locP[2] = image.at<unsigned char>(i-1,j-1);
-			locP[3] = image.at<unsigned char>(i, j-1);
-			locP[4] = image.at<unsigned char>(i+1, j-1);
-			locP[5] = image.at<unsigned char>(i+1, j);
-			locP[6] = image.at<unsigned char>(i+1, j+1);
-			locP[7] = image.at<unsigned char>(i, j+1);
-			locP[8] = image.at<unsigned char>(i-1, j+1);
+			locP[0] = image.at<unsigned char>(i, j);
+			locP[1] = image.at<unsigned char>(i - 1, j);
+			locP[2] = image.at<unsigned char>(i - 1, j - 1);
+			locP[3] = image.at<unsigned char>(i, j - 1);
+			locP[4] = image.at<unsigned char>(i + 1, j - 1);
+			locP[5] = image.at<unsigned char>(i + 1, j);
+			locP[6] = image.at<unsigned char>(i + 1, j + 1);
+			locP[7] = image.at<unsigned char>(i, j + 1);
+			locP[8] = image.at<unsigned char>(i - 1, j + 1);
 			lbpHist[computeLbpCode(locP)] ++;
 		}
 	}
@@ -345,15 +350,15 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 }
 
 // Compute SIFT histogram for given image
-int* computeSiftHist(MGHData data, const Mat &codeWords)
+void computeSiftHist(MGHData &data, const Mat &codeWords)
 {
-	int* hist;
 	// extract features from image
-	
+	Mat features = extractSiftFeatures(data.image);
+
 	// find nearest code word
 
-	// return histogram
-	return hist;
+
+	
 }
 
 // Extract LBP Features for given image
@@ -365,11 +370,11 @@ Mat extractLBPFeatures(Mat image, Mat &outputFeature){
 	int N = 10;
 
 	vector<Mat> tiles;
-	
+
 	image.copyTo(input);
 
-	for(int x = 0; x < input.cols- N; x += N){
-		for(int y = 0; y < input.rows - N; y += N){
+	for (int x = 0; x < input.cols - N; x += N){
+		for (int y = 0; y < input.rows - N; y += N){
 			Mat tile = input(Rect(x, y, N, N));
 			tiles.push_back(tile);
 		}
@@ -382,7 +387,7 @@ Mat extractLBPFeatures(Mat image, Mat &outputFeature){
 	Mat histMat(numOfRow, 256, CV_64F);
 
 	// For each tile, compute the histogram
-	for(int i = 0; i < tiles.size(); i++){
+	for (int i = 0; i < tiles.size(); i++){
 		computeLbpHist(tiles.at(i), hist);
 		Mat temp = Mat(1, 256, CV_64F, hist);
 		temp.copyTo(histMat.row(i));
@@ -417,13 +422,13 @@ string computeRecognition(Mat input_hist, vector<Mat> training_hist)
 }
 
 void drawRectangle(){
-	
+
 	Mat input;
 
 }
 
 
-// Override method for extract LBP features
+// Override method for extracting LBP features
 Mat extractLBPFeatures(Mat image){
 	Mat output;
 	Mat features = extractLBPFeatures(image, output);
