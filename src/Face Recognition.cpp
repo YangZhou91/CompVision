@@ -56,7 +56,9 @@ Mat computeCodeWords(Mat descriptors, int K);
 Mat getROI(MGHData data);
 void drawSIFTImage(int i, vector<KeyPoint> keypoints, Mat input);
 void drawLBPHistogram();
+
 void drawSIFTCodeword();
+void drawLBPCodeword();
 
 // Image loader part
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
@@ -125,6 +127,7 @@ int main()
 	//drawLBPHistogram();
 
 	drawSIFTCodeword();
+	drawLBPCodeword();
 
 	// Part 3
 	//computeRecognitionRate(Mat input_hist, sift_feature_clusters);
@@ -593,24 +596,54 @@ void drawLBPHistogram(){
 void drawSIFTCodeword(){
 	
 	MGHData tempData = trainingdata.at(2);
-	Mat codeword = tempData.sift_histogram;
+	Mat siftCodeword = tempData.sift_histogram;
 
 	// number of codewords
 	int histSize = 5;
+	// Size of display window
 	int hist_w = 256; int hist_h = 100;
 	int bin_w = cvRound((double)hist_w / histSize);
 	Mat histImage_1(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
 	
 
 
-	//for (int i = 1; i < histSize; i++){
-	//	line(histImage_1, Point(bin_w*(i - 1), hist_h - cvRound(codeword.at<int>(i-1))),
-	//		Point(bin_w*(i), hist_h - cvRound(codeword.at<int>(i - 1))),
-	//		Scalar(255, 0, 0), 2, 8, 0);
-	//	
-	//}
+	for (int i = 1; i < histSize; i++){
+		line(histImage_1, Point(bin_w*(i - 1), hist_h - cvRound(siftCodeword.at<char>(i - 1))),
+			Point(bin_w*(i), hist_h - cvRound(siftCodeword.at<char>(i - 1))),
+			Scalar(255, 0, 0), 2, 8, 0);
+		
+	}
 
-	cout << "[drawSIFTCodeword] : " << codeword.rows << " x " << codeword.cols << " x " << codeword.at<float>(0,1) << endl;
+
+	/// Display
+	namedWindow(format("SIFT_Hist_%i", 1), CV_WINDOW_AUTOSIZE);
+
+	imshow(format("SIFT_Hist_%i", 1), histImage_1);
+
+	waitKey(0);
+}
+
+void drawLBPCodeword(){
+
+	MGHData tempData = trainingdata.at(2);
+	Mat siftCodeword = tempData.lbp_histogram;
+
+	// number of codewords
+	int histSize = 5;
+	// Size of display window
+	int hist_w = 256; int hist_h = 100;
+	int bin_w = cvRound((double)hist_w / histSize);
+	Mat histImage_1(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
+
+
+
+	for (int i = 1; i < histSize; i++){
+		line(histImage_1, Point(bin_w*(i - 1), hist_h - cvRound(siftCodeword.at<char>(i - 1))),
+			Point(bin_w*(i), hist_h - cvRound(siftCodeword.at<char>(i - 1))),
+			Scalar(255, 0, 0), 2, 8, 0);
+
+	}
+
 
 	/// Display
 	namedWindow(format("LBP_Hist_%i", 1), CV_WINDOW_AUTOSIZE);
