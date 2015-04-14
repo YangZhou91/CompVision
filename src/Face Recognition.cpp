@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <string>
 #include "dirent.h"
 
 #include <opencv2/core/core.hpp>
@@ -42,7 +43,7 @@ vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int* computeLbpHist(Mat &image, int *lbpHist);
-int* computeSiftHist(Mat &image, const Mat &codeWords);
+void computeSiftHist(MGHData &data, const Mat &codeWords, Mat features);
 Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
 Mat extractLBPFeatures(Mat image);
 Mat extractSiftFeatures(Mat image);
@@ -57,9 +58,9 @@ int main() {
 
 	vector<MGHData> trainingdata, testingdata, groupdata;
 
+	cout << "Loading Images..." << endl;
 	MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
 
-	
 	vector<Mat> sift_features;
 	vector<Mat> lbp_features;
 
@@ -71,7 +72,7 @@ int main() {
 	for (int i = 0; i < trainingdata.size(); i++)
 		lbp_features.push_back(extractLBPFeatures(trainingdata.at(i).image));
 
-	Mat feature_clusters;
+	Mat sift_feature_clusters;
 	cout << "Computing code words for training imgs..." << endl;
 
 	// create one big matrix to contain all features from all training images
@@ -79,23 +80,28 @@ int main() {
 	for (int i = 0; i < sift_features.size(); i++)
 		sift_features_mat.push_back(sift_features.at(i));
 
-	feature_clusters = computeCodeWords(sift_features_mat, 5);
+	sift_feature_clusters = computeCodeWords(sift_features_mat, 5);
+
+	// update histogram field in each trainingdata 
+	for (int i = 0; i < trainingdata.size(); i++)
+		computeSiftHist(trainingdata[i], sift_feature_clusters, sift_features[i]);
+
+	//for (int i = 0; i < trainingdata.size(); i++)
+	//{
+	//	cout << "Total number of features : " << sift_features[i].rows << endl;
+	//	cout << "Histogram = " << endl << " " << trainingdata[i].histogram << endl << endl;
+	//}
 
 	//computeRecognition(Mat input_hist, vector<Mat> training_hist);
 
 	cout << ">>>>>>>>>>>>>End of the program" << endl;
 	getchar();
 	return 0;
-	
-
-
 }
 
 // Load training and testing images
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory)
 {
-	cout << "Loading Images" << endl;
-
 	string trainingDir = directory + "/Training";
 	string testingDir = directory + "/Testing";
 	string groupDir = directory + "/Group";
@@ -106,21 +112,20 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 	struct dirent *ent;
 	
 	// Training images
-	if ((dir = opendir(trainingDir.c_str())) != NULL) {
-
-		while ((ent = readdir(dir)) != NULL) {
-
+	if ((dir = opendir(trainingDir.c_str())) != NULL) 
+	{
+		while ((ent = readdir(dir)) != NULL) 
+		{
 			string imgname = ent->d_name;
-
-			if (imgname.find(".jpg") != string::npos) {
-
-				std::cout << "Loading " << imgname << endl;
-
+			if (imgname.find(".jpg") != string::npos)
+			{
+				cout << "Loading " << imgname << endl;
 				vector<string> tokens;
 				size_t pos = 0;
 				std::string token;
 
-				while ((pos = imgname.find(delimiter)) != string::npos) {
+				while ((pos = imgname.find(delimiter)) != string::npos) 
+				{
 					token = imgname.substr(0, pos);
 					tokens.push_back(token);
 					imgname.erase(0, pos + delimiter.length());
@@ -141,32 +146,32 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 				data.roi = Rect(point1, point2);
 
 				trainingdataset.push_back(data);
-
 			}
-
 		}
 		closedir(dir);
 	}
-	else {
-		/* could not open directory */
+	else 
+	{
 		cerr << "Unable to open image directory " << trainingDir << endl;
 		return false;
 	}
 	
 	// Testing images
-	if ((dir = opendir(testingDir.c_str())) != NULL) {
-
-		while ((ent = readdir(dir)) != NULL) {
+	if ((dir = opendir(testingDir.c_str())) != NULL) 
+	{
+		while ((ent = readdir(dir)) != NULL) 
+		{
 			string imgname = ent->d_name;
 
-			if (imgname.find(".jpg") != string::npos) {
-				std::cout << "Loading " << imgname << endl;
-
+			if (imgname.find(".jpg") != string::npos) 
+			{
+				cout << "Loading " << imgname << endl;
 				vector<string> tokens;
 				size_t pos = 0;
 				std::string token;
 
-				while ((pos = imgname.find(delimiter)) != string::npos) {
+				while ((pos = imgname.find(delimiter)) != string::npos) 
+				{
 					token = imgname.substr(0, pos);
 					tokens.push_back(token);
 					imgname.erase(0, pos + delimiter.length());
@@ -192,20 +197,21 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 		}
 		closedir(dir);
 	}
-	else {
-		/* could not open directory */
+	else 
+	{
 		cerr << "Unable to open image directory " << testingDir << endl;
 		return false;
 	}
 
 	//Group data
-	if ((dir = opendir(groupDir.c_str())) != NULL) {
-
-		while ((ent = readdir(dir)) != NULL) {
+	if ((dir = opendir(groupDir.c_str())) != NULL) 
+	{
+		while ((ent = readdir(dir)) != NULL) 
+		{
 			string imgname = ent->d_name;
-
-			if (imgname.find(".jpg") != string::npos) {
-				std::cout << "Loading " << imgname << endl;
+			if (imgname.find(".jpg") != string::npos) 
+			{
+				cout << "Loading " << imgname << endl;
 
 				Mat img = imread(groupDir + "/" + ent->d_name, CV_LOAD_IMAGE_GRAYSCALE);
 				MGHData data;
@@ -219,7 +225,8 @@ bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdat
 		}
 		closedir(dir);
 	}
-	else {
+	else 
+	{
 		/* could not open directory */
 		cerr << "Unable to open image directory " << testingDir << endl;
 		return false;
@@ -302,15 +309,15 @@ vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data){
 	Mat histImage(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
 
 	for (int i = 1; i < histSize; i++){
-		//line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(hist[i - 1])),
-			//Point(bin_w*(i), hist_h - cvRound(hist[i - 1])),
-			//Scalar(255, 0, 0), 2, 8, 0);
+		line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(hist[i - 1])),
+			Point(bin_w*(i), hist_h - cvRound(hist[i - 1])),
+			Scalar(255, 0, 0), 2, 8, 0);
 		//cout << "[drawLBPFeature] hist " << i -1  << " "<< feature[i-1] << endl;
 	}
 
 	/// Display
-	//namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE);
-	//imshow("calcHist Demo", histImage);
+	namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE);
+	imshow("calcHist Demo", histImage);
 
 	return featureUncluster;
 
@@ -370,15 +377,27 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 }
 
 // Compute SIFT histogram for given image
-void computeSiftHist(MGHData &data, const Mat &codeWords)
+void computeSiftHist(MGHData &data, const Mat &codeWords, Mat features)
 {
-	// extract features from image
-	Mat features = extractSiftFeatures(data.image);
+	Mat histogram = Mat::zeros(1, codeWords.rows, CV_8UC1);
 
-	// find nearest code word
-
-
-	
+	// build histogram
+	for (int i = 0; i < features.rows; i++)
+	{
+		double min_dist = numeric_limits<double>::infinity();
+		int code_word = -1;
+		for (int j = 0; j < codeWords.rows; j++)
+		{
+			double dist = norm(codeWords.row(j), features.row(i), NORM_L2);
+			if (dist < min_dist)
+			{
+				min_dist = dist;
+				code_word = j;
+			}
+		}
+		histogram.data[code_word] += 1;
+	}
+	data.histogram = histogram;
 }
 
 // Extract LBP Features for given image
@@ -418,13 +437,11 @@ Mat extractLBPFeatures(Mat image, Mat &outputFeature){
 
 // Compute code words for given descriptors
 Mat computeCodeWords(Mat descriptors, int K){
-	// Change to K later on
-	int clusterCount = 10;
 	Mat labels;
 	Mat centers;
 	TermCriteria criteria{ TermCriteria::COUNT, 100, 1 };
 
-	kmeans(descriptors, clusterCount, labels, criteria, 1, KMEANS_RANDOM_CENTERS, centers);
+	kmeans(descriptors, K, labels, criteria, 1, KMEANS_RANDOM_CENTERS, centers);
 
 	cout << "[computedCodeWords] The size of centers: " << centers.rows << " x " << centers.cols << endl;
 
