@@ -29,7 +29,8 @@ struct MGHData
 	string subject;
 	string distance;
 	int angle;
-	Mat histogram;
+	Mat sift_histogram;
+	Mat lbp_histogram;
 	Rect roi;
 };
 
@@ -43,7 +44,8 @@ vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data);
 
 int computeLbpCode(unsigned char seq[9]);
 int* computeLbpHist(Mat &image, int *lbpHist);
-void computeSiftHist(MGHData &data, const Mat &codeWords, Mat features);
+void computeSiftCodewordHist(MGHData &data, const Mat &codeWords, Mat features);
+void computeLBPCodewordHist(MGHData &data, const Mat &codeWords, Mat features);
 Mat extractLBPFeatures(Mat image, Mat &outputFeatures);
 Mat extractLBPFeatures(Mat image);
 Mat extractSiftFeatures(Mat image);
@@ -65,26 +67,27 @@ int main()
 	vector<Mat> sift_features;
 	vector<Mat> lbp_features;
 
-	// Part 1
+	// Part 2
 	cout << "Computing Sift features for training images..." << endl;
 	for (int i = 0; i < trainingdata.size(); i++)
 		sift_features.push_back(extractSiftFeatures(getROI(trainingdata.at(i))));
 
-	// Display SIFT features on 10 selected training images
-	vector<Mat> sift_imgs;
-	for (int i = 0; i < 10; i++)
-	{
-		drawKeypoints(trainingdata[i].image, sift_features[i], sift_imgs[i], Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-		imshow("Sift" + to_string(i+1), sift_imgs[i]);
-	}
+	//// Display SIFT features on 10 selected training images
+	//vector<Mat> sift_imgs;
+	//for (int i = 0; i < 10; i++)
+	//{
+	//	drawKeypoints(trainingdata[i].image, sift_features[i], sift_imgs[i], Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+	//	imshow("Sift" + to_string(i+1), sift_imgs[i]);
+	//}
+
 	cout << "Computing LBP features for training images..." << endl;
 	for (int i = 0; i < trainingdata.size(); i++)
 		lbp_features.push_back(extractLBPFeatures(getROI(trainingdata.at(i))));
 
-	Mat sift_feature_clusters;
-	cout << "Computing code words for training images..." << endl;
+	Mat sift_feature_clusters, lbp_feature_clusters;
+	cout << "Computing SIFT code words for training images..." << endl;
 
-	// create one big matrix to contain all features from all training images
+	// create one big matrix to contain all SIFT features from all training images
 	Mat sift_features_mat;
 	for (int i = 0; i < sift_features.size(); i++)
 		sift_features_mat.push_back(sift_features.at(i));
@@ -93,9 +96,22 @@ int main()
 
 	// update histogram field in each trainingdata 
 	for (int i = 0; i < trainingdata.size(); i++)
-		computeSiftHist(trainingdata[i], sift_feature_clusters, sift_features[i]);
+		computeSiftCodewordHist(trainingdata[i], sift_feature_clusters, sift_features[i]);
 
-	// Part 2
+	cout << "Computing LBP code words for training images..." << endl;
+
+	// create one big matrix to contain all LBP features from all training images
+	Mat lbp_features_mat;
+	for (int i = 0; i < lbp_features.size(); i++)
+		lbp_features_mat.push_back(lbp_features.at(i));
+
+	lbp_feature_clusters = computeCodeWords(lbp_features_mat, 5);
+
+	// update histogram field in each trainingdata 
+	for (int i = 0; i < trainingdata.size(); i++)
+		computeLBPCodewordHist(trainingdata[i], lbp_feature_clusters, lbp_features[i]);
+
+	// Part 3
 	//computeRecognitionRate(Mat input_hist, sift_feature_clusters);
 
 	cout << ">>>>>>>>>>>>>End of the program" << endl;
@@ -379,8 +395,8 @@ int* computeLbpHist(Mat &image, int* lbpHist){
 	return lbpHist;
 }
 
-// Compute SIFT histogram for given image
-void computeSiftHist(MGHData &data, const Mat &codeWords, Mat features)
+// Compute SIFT code word histogram for given image
+void computeSiftCodewordHist(MGHData &data, const Mat &codeWords, Mat features)
 {
 	Mat histogram = Mat::zeros(1, codeWords.rows, CV_8UC1);
 
@@ -400,7 +416,31 @@ void computeSiftHist(MGHData &data, const Mat &codeWords, Mat features)
 		}
 		histogram.data[code_word] += 1;
 	}
-	data.histogram = histogram;
+	data.sift_histogram = histogram;
+}
+
+// Compute SIFT code word histogram for given image
+void computeLBPCodewordHist(MGHData &data, const Mat &codeWords, Mat features)
+{
+	Mat histogram = Mat::zeros(1, codeWords.rows, CV_8UC1);
+
+	// build histogram
+	for (int i = 0; i < features.rows; i++)
+	{
+		double min_dist = numeric_limits<double>::infinity();
+		int code_word = -1;
+		for (int j = 0; j < codeWords.rows; j++)
+		{
+			double dist = norm(codeWords.row(j), features.row(i), NORM_L2);
+			if (dist < min_dist)
+			{
+				min_dist = dist;
+				code_word = j;
+			}
+		}
+		histogram.data[code_word] += 1;
+	}
+	data.lbp_histogram = histogram;
 }
 
 // Extract LBP Features for given image
