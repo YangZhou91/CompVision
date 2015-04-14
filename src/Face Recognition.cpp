@@ -55,14 +55,17 @@ Mat computeCodeWords(Mat descriptors, int K);
 // Helper methods
 Mat getROI(MGHData data);
 void drawSIFTImage(int i, vector<KeyPoint> keypoints, Mat input);
+void drawLBPHistogram();
 
 // Image loader part
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
 void mouse_click(int event, int x, int y, int flags, void *param);
 
+vector<MGHData> trainingdata, testingdata, groupdata;
+
 int main() 
 {
-	vector<MGHData> trainingdata, testingdata, groupdata;
+	
 
 	cout << "Loading Images..." << endl;
 	MGHDataLoader(trainingdata, testingdata, groupdata, "Images/");
@@ -115,7 +118,10 @@ int main()
 	for (int i = 0; i < trainingdata.size(); i++)
 		computeLBPCodewordHist(trainingdata[i], lbp_feature_clusters, lbp_features[i]);
 
-	bulkExtractSiftFeatures(trainingdata);
+	//bulkExtractSiftFeatures(trainingdata);
+	//bulkExtractLBPFeatures(trainingdata);
+
+	drawLBPHistogram();
 
 	// Part 3
 	//computeRecognitionRate(Mat input_hist, sift_feature_clusters);
@@ -329,20 +335,6 @@ vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data){
 		featureUncluster.push_back(features);
 	}
 
-	int hist_w = 512; int hist_h = 400;
-	int bin_w = cvRound((double)hist_w / histSize);
-	Mat histImage(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
-
-	for (int i = 1; i < histSize; i++){
-		line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(hist[i - 1])),
-			Point(bin_w*(i), hist_h - cvRound(hist[i - 1])),
-			Scalar(255, 0, 0), 2, 8, 0);
-		//cout << "[drawLBPFeature] hist " << i -1  << " "<< feature[i-1] << endl;
-	}
-
-	/// Display
-	namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE);
-	imshow("calcHist Demo", histImage);
 
 	return featureUncluster;
 
@@ -544,6 +536,55 @@ void drawSIFTImage(int i, vector<KeyPoint> keypoints, Mat input){
 	Mat output;
 	drawKeypoints(input, keypoints, output);
 	imshow(format("SIFT_Features_%i", i), output);
+}
+
+void drawLBPHistogram(){
+
+	Mat input = trainingdata.at(1).image;
+	
+	int height = input.rows;
+	int width = input.cols;
+	int N = 40;
+	int histSize = 256;
+	Mat patch_1 = input(Rect(1, 1, N, N));
+	//imshow("input", patch_1);
+	waitKey(0);
+	Mat patch_2 = input(Rect(10, 10, N, N));
+	Mat patch_3 = input(Rect(50, 50, N, N));
+	int hist_1[256];
+	int hist_2[256];
+	int hist_3[256];
+	computeLbpHist(patch_1, hist_1);
+	computeLbpHist(patch_2, hist_2);
+	computeLbpHist(patch_3, hist_3);
+
+	// width and height for the window
+	int hist_w = 256; int hist_h = 100;
+	int bin_w = cvRound((double)hist_w / histSize);
+	Mat histImage_1(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
+	Mat histImage_2(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
+	Mat histImage_3(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
+
+	for (int i = 1; i < histSize; i++){
+		line(histImage_1, Point(bin_w*(i - 1), hist_h - cvRound(hist_1[i - 1])),
+			Point(bin_w*(i), hist_h - cvRound(hist_1[i - 1])),
+			Scalar(255, 0, 0), 2, 8, 0);
+		line(histImage_2, Point(bin_w*(i - 1), hist_h - cvRound(hist_2[i - 1])),
+			Point(bin_w*(i), hist_h - cvRound(hist_2[i - 1])),
+			Scalar(255, 0, 0), 2, 8, 0);
+		line(histImage_3, Point(bin_w*(i - 1), hist_h - cvRound(hist_3[i - 1])),
+			Point(bin_w*(i), hist_h - cvRound(hist_3[i - 1])),
+			Scalar(255, 0, 0), 2, 8, 0);
+	}
+
+	/// Display
+	namedWindow(format("LBP_Hist_%i", 1), CV_WINDOW_AUTOSIZE);
+	namedWindow(format("LBP_Hist_%i", 2), CV_WINDOW_AUTOSIZE);
+	namedWindow(format("LBP_Hist_%i", 3), CV_WINDOW_AUTOSIZE);
+	imshow(format("LBP_Hist_%i", 1), histImage_1);
+	imshow(format("LBP_Hist_%i", 2), histImage_2);
+	imshow(format("LBP_Hist_%i", 3), histImage_3);
+	waitKey(0);
 }
 
 //Callback for mousclick event, the x-y coordinate of mouse button-up and button-down 
