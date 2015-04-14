@@ -62,6 +62,7 @@ void mouse_click(int event, int x, int y, int flags, void *param);
 
 int main() 
 {
+	/* PART 1 */
 	vector<MGHData> trainingdata, testingdata, groupdata;
 
 	cout << "Loading Images..." << endl;
@@ -70,39 +71,30 @@ int main()
 	vector<Mat> sift_features_training, sift_features_testing;
 	vector<Mat> lbp_features_training, lbp_features_testing;
 
-	// Part 2
+	/* PART 2 */
 	cout << "Computing Sift features for training images..." << endl;
 	for (int i = 0; i < trainingdata.size(); i++)
 		sift_features_training.push_back(extractSiftFeatures(getROI(trainingdata.at(i))));
-
-	//// display sift features on 10 selected training images
-	//vector<Mat> sift_imgs;
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	//sift_features[i].convertto(sift_features[i], cv_64f);
-	//	//trainingdata[i].image.convertto(trainingdata[i].image, cv_64f);
-	//	drawKeypoints(trainingdata[i].image, sift_features[i], sift_imgs[i], Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-	//	imshow("sift" + to_string(i+1), sift_imgs[i]);
-	//	waitKey(0);
-	//}
 
 	cout << "Computing LBP features for training images..." << endl;
 	for (int i = 0; i < trainingdata.size(); i++)
 		lbp_features_training.push_back(extractLBPFeatures(getROI(trainingdata.at(i))));
 
-	Mat sift_feature_clusters, lbp_feature_clusters;
+	map<int, Mat> sift_feature_clusters, lbp_feature_clusters;
 	cout << "Computing SIFT code words for training images..." << endl;
 
 	// create one big matrix to contain all SIFT features from all training images
-	Mat sift_features_mat;
+	Mat sift_features_training_mat;
 	for (int i = 0; i < sift_features_training.size(); i++)
-		sift_features_mat.push_back(sift_features_training.at(i));
+		sift_features_training_mat.push_back(sift_features_training.at(i));
 
-	sift_feature_clusters = computeCodeWords(sift_features_mat, 5);
+	sift_feature_clusters.insert(pair<int, Mat>(5, computeCodeWords(sift_features_training_mat, 5)));
+	sift_feature_clusters.insert(pair<int, Mat>(10, computeCodeWords(sift_features_training_mat, 15)));
+	sift_feature_clusters.insert(pair<int, Mat>(20, computeCodeWords(sift_features_training_mat, 20)));
 
 	// update histogram field in each training data 
 	for (int i = 0; i < trainingdata.size(); i++)
-		computeSiftCodewordHist(trainingdata[i], sift_feature_clusters, sift_features_training[i]);
+		computeSiftCodewordHist(trainingdata[i], sift_feature_clusters[5], sift_features_training[i]);
 
 	cout << "Computing LBP code words for training images..." << endl;
 
@@ -111,119 +103,124 @@ int main()
 	for (int i = 0; i < lbp_features_training.size(); i++){
 		lbp_features_training_mat.push_back(lbp_features_training.at(i));
 	}
+
 	cout << "[Main] lbp_features_mat: " << lbp_features_training_mat.rows << " x " << lbp_features_training_mat.cols << endl;
-	lbp_feature_clusters = computeCodeWords(lbp_features_training_mat, 5);
+	
+	lbp_feature_clusters.insert(pair<int, Mat>(5, computeCodeWords(lbp_features_training_mat, 5)));
+	lbp_feature_clusters.insert(pair<int, Mat>(10, computeCodeWords(lbp_features_training_mat, 15)));
+	lbp_feature_clusters.insert(pair<int, Mat>(20, computeCodeWords(lbp_features_training_mat, 20)));
 
 	// update histogram field in each training data 
 	for (int i = 0; i < trainingdata.size(); i++)
-		computeLBPCodewordHist(trainingdata[i], lbp_feature_clusters, lbp_features_training[i]);
+		computeLBPCodewordHist(trainingdata[i], lbp_feature_clusters[5], lbp_features_training[i]);
 
-	// Part 3
-	//computeRecognitionRate(Mat input_hist, sift_feature_clusters);
+	/* PART 3 */
 
 	cout << "Computing Sift features for testing images..." << endl;
 	for (int i = 0; i < testingdata.size(); i++)
 		sift_features_testing.push_back(extractSiftFeatures(getROI(testingdata.at(i))));
 
-	//// display sift features on 10 selected training images
-	//vector<Mat> sift_imgs;
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	//sift_features[i].convertto(sift_features[i], cv_64f);
-	//	//trainingdata[i].image.convertto(trainingdata[i].image, cv_64f);
-	//	drawKeypoints(trainingdata[i].image, sift_features[i], sift_imgs[i], Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-	//	imshow("sift" + to_string(i+1), sift_imgs[i]);
-	//	waitKey(0);
-	//}
-
 	cout << "Computing LBP features for testing images..." << endl;
 	for (int i = 0; i < testingdata.size(); i++)
 		lbp_features_testing.push_back(extractLBPFeatures(getROI(testingdata.at(i))));
 
-	// update histogram field in each testing data 
-	for (int i = 0; i < testingdata.size(); i++)
-		computeSiftCodewordHist(testingdata[i], sift_feature_clusters, sift_features_testing[i]);
-
-	// update histogram field in each testing data 
-	for (int i = 0; i < testingdata.size(); i++)
-		computeLBPCodewordHist(testingdata[i], lbp_feature_clusters, lbp_features_testing[i]);
-
-	// evaluate recognition performance
-	cout << "Computing classification..." << endl;
 	map<int, int> angle_to_position;
-	angle_to_position.insert(pair<int,int>(-45,0));
+	angle_to_position.insert(pair<int, int>(-45, 0));
 	angle_to_position.insert(pair<int, int>(-30, 1));
 	angle_to_position.insert(pair<int, int>(0, 2));
 	angle_to_position.insert(pair<int, int>(30, 3));
 	angle_to_position.insert(pair<int, int>(45, 4));
 
-	double sift_recognition_performance = 0.0;
-	Mat sift_confusion_matrix = Mat::zeros(5, 5, CV_64F);
-	Mat normalized_sift_confusion_matrix;
-	for (int i = 0; i < testingdata.size(); i++)
+	for (int number_of_clusters = 5; number_of_clusters <= 20; number_of_clusters *= 2)
 	{
-		MGHData actual, expected;
-		actual = computeSiftClassification(testingdata[i], trainingdata);
-		expected = testingdata[i];
+		cout << "Number of clusters = " << number_of_clusters << endl;
 
-		cout << "Actual = " << actual.subject << ", " << "Expected = " << expected.subject << endl;
+		// update histogram field in each testing data 
+		for (int i = 0; i < testingdata.size(); i++)
+			computeSiftCodewordHist(testingdata[i], sift_feature_clusters[number_of_clusters], sift_features_testing[i]);
 
-		int i_idx, j_idx;
-		i_idx = angle_to_position[actual.angle];
-		j_idx = angle_to_position[testingdata[i].angle];
-		sift_confusion_matrix.at<double>(i_idx, j_idx) += 1;
+		// update histogram field in each testing data 
+		for (int i = 0; i < testingdata.size(); i++)
+			computeLBPCodewordHist(testingdata[i], lbp_feature_clusters[number_of_clusters], lbp_features_testing[i]);
 
-		if (actual.subject.compare(expected.subject))
-			sift_recognition_performance += 1;
+		// update histogram field in each training data 
+		for (int i = 0; i < trainingdata.size(); i++)
+			computeSiftCodewordHist(trainingdata[i], sift_feature_clusters[number_of_clusters], sift_features_training[i]);
+
+		// update histogram field in each training data 
+		for (int i = 0; i < trainingdata.size(); i++)
+			computeLBPCodewordHist(trainingdata[i], lbp_feature_clusters[number_of_clusters], lbp_features_training[i]);
+
+		// evaluate recognition performance
+		cout << "Computing classification..." << endl;
+
+		double sift_recognition_performance = 0.0;
+		Mat sift_confusion_matrix = Mat::zeros(5, 5, CV_64F);
+		Mat normalized_sift_confusion_matrix;
+		for (int i = 0; i < testingdata.size(); i++)
+		{
+			MGHData actual, expected;
+			actual = computeSiftClassification(testingdata[i], trainingdata);
+			expected = testingdata[i];
+
+			//cout << "Actual = " << actual.subject << ", " << "Expected = " << expected.subject << endl;
+
+			int i_idx, j_idx;
+			i_idx = angle_to_position[actual.angle];
+			j_idx = angle_to_position[testingdata[i].angle];
+			sift_confusion_matrix.at<double>(i_idx, j_idx) += 1;
+
+			if (actual.subject.compare(expected.subject))
+				sift_recognition_performance += 1;
+		}
+
+		// normalize confusion matrix
+		for (int k = 0; k < 5; k++)
+		{
+			Mat row;
+			double sum = norm(sift_confusion_matrix.row(k), NORM_L1);
+			row = sift_confusion_matrix.row(k) / sum;
+			normalized_sift_confusion_matrix.push_back(row);
+		}
+
+		sift_recognition_performance = (sift_recognition_performance / trainingdata.size()) * 100;
+		cout << "SIFT recognition performance = " << sift_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
+		cout << "SIFT Confusion matrix = " << endl << " " << normalized_sift_confusion_matrix << endl << endl << "\n" << endl;
+
+		double lbp_recognition_performance = 0.0;
+		Mat lbp_confusion_matrix = Mat::zeros(5, 5, CV_64F);
+		Mat lbp_normalized_confusion_matrix;
+		for (int i = 0; i < testingdata.size(); i++)
+		{
+			MGHData actual, expected;
+			actual = computeLBPClassification(testingdata[i], trainingdata);
+			expected = testingdata[i];
+
+			//cout << "Actual = " << actual.subject << ", " << "Expected = " << expected.subject << endl;
+
+			int i_idx, j_idx;
+			i_idx = angle_to_position[actual.angle];
+			j_idx = angle_to_position[testingdata[i].angle];
+			lbp_confusion_matrix.at<double>(i_idx, j_idx) += 1;
+
+			if (actual.subject.compare(expected.subject))
+				lbp_recognition_performance += 1;
+		}
+
+		// normalize confusion matrix
+		for (int k = 0; k < 5; k++)
+		{
+			Mat row;
+			double sum = norm(lbp_confusion_matrix.row(k), NORM_L1);
+			row = lbp_confusion_matrix.row(k) / sum;
+			lbp_normalized_confusion_matrix.push_back(row);
+		}
+
+		lbp_recognition_performance = (lbp_recognition_performance / trainingdata.size()) * 100;
+		cout << "LBP recognition performance = " << lbp_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
+		cout << "LBP Confusion matrix = " << endl << " " << lbp_normalized_confusion_matrix << endl << endl << "\n" << endl;
 	}
-
-	// normalize confusion matrix
-	for (int k = 0; k < 5; k++)
-	{
-		Mat row;
-		double sum = norm(sift_confusion_matrix.row(k), NORM_L1);
-		row = sift_confusion_matrix.row(k) / sum;
-		normalized_sift_confusion_matrix.push_back(row);
-	}
-
-	sift_recognition_performance = ( sift_recognition_performance / trainingdata.size() ) * 100;
-	cout << "SIFT recognition performance = " << sift_recognition_performance << "%" << endl;
-	cout << "SIFT Confusion matrix = " << endl << " " << normalized_sift_confusion_matrix << endl << endl << "\n" << endl;
-
-	double lbp_recognition_performance = 0.0;
-	Mat lbp_confusion_matrix = Mat::zeros(5, 5, CV_64F);
-	Mat lbp_normalized_confusion_matrix;
-	for (int i = 0; i < testingdata.size(); i++)
-	{
-		MGHData actual, expected;
-		actual = computeLBPClassification(testingdata[i], trainingdata);
-		expected = testingdata[i];
-
-		cout << "Actual = " << actual.subject << ", " << "Expected = " << expected.subject << endl;
-
-		int i_idx, j_idx;
-		i_idx = angle_to_position[actual.angle];
-		j_idx = angle_to_position[testingdata[i].angle];
-		lbp_confusion_matrix.at<double>(i_idx, j_idx) += 1;
-
-		if (actual.subject.compare(expected.subject))
-			lbp_recognition_performance += 1;
-	}
-
-	// normalize confusion matrix
-	for (int k = 0; k < 5; k++)
-	{
-		Mat row;
-		double sum = norm(lbp_confusion_matrix.row(k), NORM_L1);
-		row = lbp_confusion_matrix.row(k) / sum;
-		lbp_normalized_confusion_matrix.push_back(row);
-	}
-
-	lbp_recognition_performance = ( lbp_recognition_performance / trainingdata.size() ) * 100;
-	cout << "LBP recognition performance = " << lbp_recognition_performance << "%" << endl;
-	cout << "LBP Confusion matrix = " << endl << " " << lbp_normalized_confusion_matrix << endl << endl << "\n" << endl;
-
-	cout << ">>>>>>>>>>>>>End of the program" << endl;
+	cout << ">>>>>>>>>>>>>DONE." << endl;
 	getchar();
 	return 0;
 }
