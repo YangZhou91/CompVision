@@ -49,7 +49,8 @@ Mat extractLBPFeatures(Mat image);
 Mat extractSiftFeatures(Mat image);
 Mat computeCodeWords(Mat descriptors, int K);
 
-void drawRectangle();
+
+Mat getROI(MGHData data);
 
 bool MGHDataLoader(vector<MGHData> &trainingdataset, vector<MGHData> &testingdataset, vector<MGHData> &groupdataset, string directory);
 void mouse_click(int event, int x, int y, int flags, void *param);
@@ -65,12 +66,14 @@ int main() {
 	vector<Mat> lbp_features;
 
 	cout << "Computing Sift features for training imgs..." << endl;
-	for (int i = 0; i < trainingdata.size(); i++)
-		sift_features.push_back(extractSiftFeatures(trainingdata.at(i).image));
+	for (int i = 0; i < trainingdata.size(); i++){
+
+		sift_features.push_back(extractSiftFeatures(getROI(trainingdata.at(i))));
+	}
 
 	cout << "Computing LBP features for training imgs..." << endl;
 	for (int i = 0; i < trainingdata.size(); i++)
-		lbp_features.push_back(extractLBPFeatures(trainingdata.at(i).image));
+		lbp_features.push_back(extractLBPFeatures(getROI(trainingdata.at(i))));
 
 	Mat sift_feature_clusters;
 	cout << "Computing code words for training imgs..." << endl;
@@ -248,16 +251,15 @@ Mat bulkExtractSiftFeatures(vector<MGHData> data) {
 
 	for (int i = 0; i < data.size(); i++) {
 		MGHData tempData = data.at(i);
-		Mat tempImg = tempData.image;
-		Mat img_resize;
-		resize(tempImg, img_resize, Size(100, 200));
+		Mat tempImg = getROI(tempData);
+
 		//Mat tempImg_gary;
 		// convert to gray scale image
 		//cvtColor(tempImg, tempImg_gary, CV_RGB2GRAY);
 
 		// detect feature points
-		detector.detect(img_resize, keypoints);
-		detector.compute(img_resize, keypoints, descriptor);
+		detector.detect(tempImg, keypoints);
+		detector.compute(tempImg, keypoints, descriptor);
 		featureUnclustered.push_back(descriptor);
 
 		// Display part
@@ -297,7 +299,7 @@ vector<Mat> bulkExtractLBPFeatures(vector<MGHData> data){
 	vector <Mat> featureUncluster;
 	for (int i = 0; i < data.size(); i++){
 		MGHData tempData = data.at(i);
-		Mat tempImg = tempData.image;
+		Mat tempImg = getROI(tempData);
 
 		extractLBPFeatures(tempImg, features);
 
@@ -458,11 +460,6 @@ string computeRecognitionRate(Mat input_hist, vector<Mat> training_hist)
 	return closest_subject;
 }
 
-void drawRectangle(){
-
-	Mat input;
-
-}
 
 
 // Override method for extracting LBP features
@@ -486,6 +483,14 @@ Mat extractSiftFeatures(Mat image){
 	detector.compute(image, keypoints, descriptor);
 
 	return descriptor;
+}
+
+Mat getROI(MGHData data){
+	MGHData tempData = data;
+	Mat tempMat = tempData.image;
+	Mat tempROI = tempMat(tempData.roi);
+
+	return tempROI;
 }
 
 //Callback for mousclick event, the x-y coordinate of mouse button-up and button-down 
