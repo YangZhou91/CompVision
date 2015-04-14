@@ -484,6 +484,7 @@ Mat computeCodeWords(Mat descriptors, int K){
 	Mat centers;
 	TermCriteria criteria{ TermCriteria::COUNT, 100, 1 };
 
+	//descriptors.convertTo(descriptors, CV_32F);
 	kmeans(descriptors, K, labels, criteria, 1, KMEANS_RANDOM_CENTERS, centers);
 
 	cout << "[computedCodeWords] The size of centers: " << centers.rows << " x " << centers.cols << endl;
