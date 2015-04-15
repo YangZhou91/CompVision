@@ -19,7 +19,7 @@
 \textbf{Part 1}
 \vspace{5mm}
 \paragraph{}
-Figs. \ref{training1}, \ref{training2} and \ref{training3} are examples of all the possible poses for a given subject.  These include yaw rotations from -45\degree,-30\degree,0\degree,30\degree and 45\degree at 3 different scales: close, medium and far.  The images were taken on a white background.
+Figs. \ref{training1}, \ref{training2} and \ref{training3} are examples of all the possible poses for a given subject.  These include yaw rotations from -45\degree,-30\degree,0\degree,30\degree and 45\degree at 3 different scales: close, medium and far.  The images were taken on a white background at a high resolution but downsampled to 150x200 in order to allow for fast processing of the LBP/SIFT algorithms and related functionality.  They were later converted to grayscale for processing as algorithms such as SIFT require it.
 \paragraph{}
 Figs. \ref{testing1}, \ref{testing2} and \ref{testing3} show the different testing poses for a given subject.  These include all of the rotations of the training images with the subject facing upwards followed by facing downwards.  In addition, different images were taken of each subject without their glasses, with different facial expressions and with a hat on.
 
@@ -40,7 +40,7 @@ Fig. \ref{part3classify} shows five examples of classification using both LBP an
 \paragraph{}
 With respect to the performance of the classifier, SIFT performs the best with a recognition rate of  69.6429\% with K = 20.  This is likely due to the fact that SIFT is more robust to the changes in lighting (mostly due to the iPhone's sensitivity to indirect light when pictures at a greater distance were taken) and scale seen in the training images as well as the testing images.  LBP performs about as well as flipping a coin, although considering the variations in the images this is to be expected.
 \paragraph{}
-Finally, Fig. \ref{part4} shows five group photos with the faces detected and tagged.  Overall, the performance is quite poor.  In (a), while all the faces are detected they are all incorrect.  In (b), Haisin is correctly detected on the left but not on the right where the algorithm believes him to be a clone of Haisin.  Similarly, Eric is correctly detected in the center but somehow is duplicated on Michael behind him.  In (c), Eric us correctly detected albeit with an extremely large bounding box. None of the other members are detected.  In (d), the only person to be detected is detected incorrectly. In (e), Gavin is correctly detected but not Haisin, who is misidentified as Michael.
+Finally, Fig. \ref{part4} shows five group photos with the faces detected and tagged.  Overall, the performance is quite poor.  In (a), while all the faces are detected they are all incorrect.  In (b), Haisin is correctly detected on the left but not on the right where the algorithm believes him to be a clone of Haisin.  Similarly, Eric is correctly detected in the center but somehow is duplicated on Michael behind him.  In (c), Eric was correctly detected albeit with an extremely large bounding box. None of the other members are detected.  In (d), the only person to be detected is detected incorrectly. In (e), Gavin is correctly detected but not Haisin, who is misidentified as Michael.
 
 It is likely that the poor performance of the algorithm with respect to the group photos is due to the fact that the lighting conditions and poses vary dramatically, far exceeding the poses and variations in the training images.
 \begin{figure}[p]
@@ -134,7 +134,7 @@ It is likely that the poor performance of the algorithm with respect to the grou
 \hspace{5mm}
 \subfloat[]{\includegraphics[width = 0.30\textwidth]{LBPHist/LBP_Hist_3.jpg}}
 
-\caption{Three examples of region histograms for a given training image.}
+\caption{Three examples of region histograms for a given training image. The horizontal axis represents pixel intensity (from 0 - 255) while the vertical axis represents the frequency of occurrence of each pixel intensity.}
 \label{part2lbphist}
 \end{figure}
 
@@ -148,7 +148,7 @@ It is likely that the poor performance of the algorithm with respect to the grou
 \hspace{5mm}
 \subfloat[SIFT for Image 2]{\includegraphics[width = 0.20\textwidth]{CodeWordHist/SIFT_Hist_2.jpg}}
 
-\caption{Histograms representing the codewords for SIFT and LBP for two select images.}
+\caption{Histograms representing the codewords for SIFT and LBP for two select images.  The horizontal axis represents the number of code words and the vertical axis represents the number occurrences of a given code word.}
 \label{part2codewords}
 \end{figure}
 
