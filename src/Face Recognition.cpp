@@ -59,13 +59,12 @@ MGHData computeLBPClassification(MGHData testingdata, vector<MGHData> trainingda
 MGHData computeClassification(MGHData testingdata, vector<MGHData> trainingdata, string feature_mode, int compare_method);
 double computeRecognitionRate(vector<MGHData> testingdata, vector<MGHData> trainingdata, vector<Mat> testing_features, vector<Mat> training_features, const Mat codewords, Mat &confusion_matrix, string feature_mode);
 
-Mat detectAndLabel(Mat frame, vector<MGHData> trainingdata, const Mat &codewords, vector<Mat> training_features);
+Mat detectAndLabel(Mat frame, vector<MGHData> trainingdata, const Mat &codewords, vector<Mat> training_features, string feature_method);
 
 /** Global variables */
 String face_cascade_name = "haarcascade_frontalface_alt.xml";
 String eyes_cascade_name = "haarcascade_eye_tree_eyeglasses.xml";
 CascadeClassifier face_cascade;
-String window_name = "Capture - Face detection";
 
 // Helper methods
 Mat getROI(MGHData data);
@@ -188,14 +187,16 @@ int main()
 	}
 
 	/* PART 4 */
-	imshow("group", groupdata[0].image);
-	waitKey(0);
+	for (int i = 0; i < groupdata.size(); i++)
+	{
+		imshow("group", groupdata[i].image);
+		waitKey(0);
 
-	if (!face_cascade.load(face_cascade_name)){ printf("--(!)Error loading face cascade\n"); return -1; };
+		if (!face_cascade.load(face_cascade_name)){ printf("--(!)Error loading face cascade\n"); return -1; };
 
-	detectAndLabel(groupdata[0].image, trainingdata, sift_feature_clusters[20], sift_features_training);
-	waitKey(0);
-
+		detectAndLabel(groupdata[i].image, trainingdata, sift_feature_clusters[10], sift_features_training, "sift");
+		waitKey(0);
+	}
 	cout << ">>>>>>>>>>>>>DONE." << endl;
 	getchar();
 	return 0;
@@ -860,13 +861,17 @@ double computeRecognitionRate(vector<MGHData> testingdata, vector<MGHData> train
 	return recognition_performance;
 }
 
-Mat detectAndLabel(Mat frame, vector<MGHData> trainingdata, const Mat &codewords,  vector<Mat> training_features)
+Mat detectAndLabel(Mat frame, vector<MGHData> trainingdata, const Mat &codewords,  vector<Mat> training_features, string feature_method)
 {
 	vector<Rect> faces;
-	Mat frame_gray;
+	Mat frame_gray, frame_with_bounded_boxes;
 
 	frame_gray = frame;
+	frame.copyTo(frame_with_bounded_boxes);
 	equalizeHist(frame_gray, frame_gray);
+
+	String window_name = "Face detection";
+	String window_name2 = "Face detection and labelling";
 
 	// Detect faces
 	face_cascade.detectMultiScale(frame_gray, faces, 1.1, 2, 0 | CASCADE_SCALE_IMAGE, Size(30, 30));
@@ -876,6 +881,7 @@ Mat detectAndLabel(Mat frame, vector<MGHData> trainingdata, const Mat &codewords
 		Point c1(faces[i].x, faces[i].y);
 		Point c2(faces[i].x + faces[i].width, faces[i].y + faces[i].height);
 		rectangle(frame, c1, c2, Scalar(255, 0, 255));
+		rectangle(frame_with_bounded_boxes, c1, c2, Scalar(255, 0, 255));
 
 		// perform classification
 		MGHData nearest_neighbor;
@@ -887,19 +893,20 @@ Mat detectAndLabel(Mat frame, vector<MGHData> trainingdata, const Mat &codewords
 		testing_features.push_back(extractSiftFeatures(getROI(testingdata)));
 
 		// update histogram field in each testing data 
-		computeCodewordHist(testingdata, codewords, testing_features, "sift");
+		computeCodewordHist(testingdata, codewords, testing_features, feature_method);
 
 		// update histogram field in each training data 
 		for (int i = 0; i < trainingdata.size(); i++)
-			computeCodewordHist(trainingdata[i], codewords, training_features[i], "sift");
+			computeCodewordHist(trainingdata[i], codewords, training_features[i], feature_method);
 
-		nearest_neighbor = computeClassification(testingdata, trainingdata, "sift");
+		nearest_neighbor = computeClassification(testingdata, trainingdata, feature_method);
 
 		putText(frame, nearest_neighbor.subject, c1, FONT_HERSHEY_PLAIN, 0.75, Scalar(255, 0, 255));
 		Mat faceROI = frame_gray(faces[i]);
 	}
 
-	imshow(window_name, frame);
+	imshow(window_name2, frame);
+	imshow(window_name, frame_with_bounded_boxes);
 	return frame;
 }
 //Callback for mousclick event, the x-y coordinate of mouse button-up and button-down 
