@@ -20,6 +20,7 @@
 #include <opencv2/nonfree/nonfree.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include "opencv2/objdetect/objdetect.hpp"
 
 using namespace std;
 using namespace cv;
@@ -57,6 +58,14 @@ MGHData computeSiftClassification(MGHData testingdata, vector<MGHData> trainingd
 MGHData computeLBPClassification(MGHData testingdata, vector<MGHData> trainingdata);
 MGHData computeClassification(MGHData testingdata, vector<MGHData> trainingdata, string feature_mode, int compare_method);
 double computeRecognitionRate(vector<MGHData> testingdata, vector<MGHData> trainingdata, vector<Mat> testing_features, vector<Mat> training_features, const Mat codewords, Mat &confusion_matrix, string feature_mode);
+
+Mat detectAndLabel(Mat frame, vector<MGHData> trainingdata, const Mat &codewords, vector<Mat> training_features);
+
+/** Global variables */
+String face_cascade_name = "haarcascade_frontalface_alt.xml";
+String eyes_cascade_name = "haarcascade_eye_tree_eyeglasses.xml";
+CascadeClassifier face_cascade;
+String window_name = "Capture - Face detection";
 
 // Helper methods
 Mat getROI(MGHData data);
@@ -136,48 +145,56 @@ int main()
 	{
 		cout << "Number of clusters = " << number_of_clusters << endl;
 
-		// update histogram field in each training data 
-		for (int i = 0; i < trainingdata.size(); i++)
-			computeCodewordHist(trainingdata[i], sift_feature_clusters[number_of_clusters], sift_features_training[i], "sift");
-
-
 	//bulkExtractSiftFeatures(trainingdata);
 	//bulkExtractLBPFeatures(trainingdata);
 
 	//drawLBPHistogram();
 
-	drawSIFTCodeword();
-	drawLBPCodeword();
-
-	// Part 3
-	//computeRecognitionRate(Mat input_hist, sift_feature_clusters);
-
-		// update histogram field in each training data 
-		for (int i = 0; i < trainingdata.size(); i++)
-			computeCodewordHist(trainingdata[i], lbp_feature_clusters[number_of_clusters], lbp_features_training[i], "lbp");
-
+		drawSIFTCodeword();
+		drawLBPCodeword();
 
 		double sift_testing_recognition_performance, lbp_testing_recognition_performance, sift_training_recognition_performance, lbp_training_recognition_performance;
 		Mat sift_testing_confusion_matrix, lbp_testing_confusion_matrix, sift_training_confusion_matrix, lbp_training_confusion_matrix;
+		string sift = "sift";
+		string lbp = "lbp";
 
-		// evaluate testing data
-		sift_testing_recognition_performance = computeRecognitionRate(testingdata, trainingdata, sift_features_testing, sift_features_training, sift_feature_clusters[number_of_clusters], sift_testing_confusion_matrix, "sift");
+		// evaluate testing and training data with SIFT
+
+		// update histogram field in each training data 
+		for (int i = 0; i < trainingdata.size(); i++)
+			computeCodewordHist(trainingdata[i], sift_feature_clusters[number_of_clusters], sift_features_training[i], sift);
+
+		sift_testing_recognition_performance = computeRecognitionRate(testingdata, trainingdata, sift_features_testing, sift_features_training, sift_feature_clusters[number_of_clusters], sift_testing_confusion_matrix, sift);
 		cout << "SIFT recognition performance [Testing] = " << sift_testing_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
 		cout << "SIFT Confusion matrix [Testing] = " << endl << " " << sift_testing_confusion_matrix << endl << endl;
 
-		lbp_testing_recognition_performance = computeRecognitionRate(testingdata, trainingdata, lbp_features_testing, lbp_features_training, lbp_feature_clusters[number_of_clusters], lbp_testing_confusion_matrix, "lbp");
-		cout << "LBP recognition performance [Testing] = " << lbp_testing_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
-		cout << "LBP Confusion matrix [Testing] = " << endl << " " << lbp_testing_confusion_matrix << endl << endl;
-
-		// evaluate training data
-		sift_training_recognition_performance = computeRecognitionRate(trainingdata, trainingdata, sift_features_training, sift_features_training, sift_feature_clusters[number_of_clusters], sift_training_confusion_matrix, "sift");
+		sift_training_recognition_performance = computeRecognitionRate(trainingdata, trainingdata, sift_features_training, sift_features_training, sift_feature_clusters[number_of_clusters], sift_training_confusion_matrix, sift);
 		cout << "SIFT recognition performance [Training] = " << sift_training_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
 		cout << "SIFT Confusion matrix [Training] = " << endl << " " << sift_training_confusion_matrix << endl << endl;
 
-		lbp_training_recognition_performance = computeRecognitionRate(trainingdata, trainingdata, lbp_features_training, lbp_features_training, lbp_feature_clusters[number_of_clusters], lbp_training_confusion_matrix, "lbp");
+		// update histogram field in each training data 
+		for (int i = 0; i < trainingdata.size(); i++)
+			computeCodewordHist(trainingdata[i], lbp_feature_clusters[number_of_clusters], lbp_features_training[i], lbp);
+
+		// evaluate testing and training data with LBP
+
+		lbp_testing_recognition_performance = computeRecognitionRate(testingdata, trainingdata, lbp_features_testing, lbp_features_training, lbp_feature_clusters[number_of_clusters], lbp_testing_confusion_matrix, lbp);
+		cout << "LBP recognition performance [Testing] = " << lbp_testing_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
+		cout << "LBP Confusion matrix [Testing] = " << endl << " " << lbp_testing_confusion_matrix << endl << endl;
+
+		lbp_training_recognition_performance = computeRecognitionRate(trainingdata, trainingdata, lbp_features_training, lbp_features_training, lbp_feature_clusters[number_of_clusters], lbp_training_confusion_matrix, lbp);
 		cout << "LBP recognition performance [Training] = " << lbp_training_recognition_performance << "%" << " (k=" << number_of_clusters << ")" << endl;
 		cout << "LBP Confusion matrix [Training] = " << endl << " " << lbp_training_confusion_matrix << endl << endl;
 	}
+
+	/* PART 4 */
+	imshow("group", groupdata[0].image);
+	waitKey(0);
+
+	if (!face_cascade.load(face_cascade_name)){ printf("--(!)Error loading face cascade\n"); return -1; };
+
+	detectAndLabel(groupdata[0].image, trainingdata, sift_feature_clusters[20], sift_features_training);
+	waitKey(0);
 
 	cout << ">>>>>>>>>>>>>DONE." << endl;
 	getchar();
@@ -676,7 +693,6 @@ Mat getROI(MGHData data){
 	return tempROI;
 }
 
-
 void drawSIFTImage(int i, vector<KeyPoint> keypoints, Mat input){
 	Mat output;
 	drawKeypoints(input, keypoints, output);
@@ -744,15 +760,12 @@ void drawSIFTCodeword(){
 	int bin_w = cvRound((double)hist_w / histSize);
 	Mat histImage_1(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
 	
-
-
 	for (int i = 1; i < histSize; i++){
 		line(histImage_1, Point(bin_w*(i - 1), hist_h - cvRound(siftCodeword.at<char>(i - 1))),
 			Point(bin_w*(i), hist_h - cvRound(siftCodeword.at<char>(i - 1))),
 			Scalar(255, 0, 0), 2, 8, 0);
 		
 	}
-
 
 	/// Display
 	namedWindow(format("SIFT_Hist_%i", 1), CV_WINDOW_AUTOSIZE);
@@ -773,8 +786,6 @@ void drawLBPCodeword(){
 	int hist_w = 256; int hist_h = 100;
 	int bin_w = cvRound((double)hist_w / histSize);
 	Mat histImage_1(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
-
-
 
 	for (int i = 1; i < histSize; i++){
 		line(histImage_1, Point(bin_w*(i - 1), hist_h - cvRound(siftCodeword.at<char>(i - 1))),
@@ -849,7 +860,48 @@ double computeRecognitionRate(vector<MGHData> testingdata, vector<MGHData> train
 	return recognition_performance;
 }
 
+Mat detectAndLabel(Mat frame, vector<MGHData> trainingdata, const Mat &codewords,  vector<Mat> training_features)
+{
+	vector<Rect> faces;
+	Mat frame_gray;
 
+	frame_gray = frame;
+	equalizeHist(frame_gray, frame_gray);
+
+	// Detect faces
+	face_cascade.detectMultiScale(frame_gray, faces, 1.1, 2, 0 | CASCADE_SCALE_IMAGE, Size(30, 30));
+
+	for (size_t i = 0; i < faces.size(); i++)
+	{
+		Point c1(faces[i].x, faces[i].y);
+		Point c2(faces[i].x + faces[i].width, faces[i].y + faces[i].height);
+		rectangle(frame, c1, c2, Scalar(255, 0, 255));
+
+		// perform classification
+		MGHData nearest_neighbor;
+		MGHData testingdata;
+		testingdata.image = frame;
+		testingdata.roi = Rect(c1, c2);
+
+		Mat testing_features;
+		testing_features.push_back(extractSiftFeatures(getROI(testingdata)));
+
+		// update histogram field in each testing data 
+		computeCodewordHist(testingdata, codewords, testing_features, "sift");
+
+		// update histogram field in each training data 
+		for (int i = 0; i < trainingdata.size(); i++)
+			computeCodewordHist(trainingdata[i], codewords, training_features[i], "sift");
+
+		nearest_neighbor = computeClassification(testingdata, trainingdata, "sift");
+
+		putText(frame, nearest_neighbor.subject, c1, FONT_HERSHEY_PLAIN, 0.75, Scalar(255, 0, 255));
+		Mat faceROI = frame_gray(faces[i]);
+	}
+
+	imshow(window_name, frame);
+	return frame;
+}
 //Callback for mousclick event, the x-y coordinate of mouse button-up and button-down 
 //are stored in two points pt1, pt2.
 /*
